@@ -1,0 +1,2016 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>HISTMATRIX // HIST DUEL 02™</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23f4efe6'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%2312100e' stroke-width='4'/%3E%3Cpath d='M32 18v14l9 6' fill='none' stroke='%2312100e' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+    body {
+      margin: 0;
+      background-color: #0d0b09;
+      color: #f5f0e6;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ФОН: КАРТИНА «БОНАПАРТ НА ПЕРЕВАЛЕ СЕН-БЕРНАР» (5-10% РАЗМЫТИЕ) + СЕТКА С ПЛЮСИКАМИ */
+    .bg-fixed-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background-color: #0d0b09;
+    }
+    .bg-napoleon-painting {
+      position: absolute;
+      inset: -14px;
+      width: calc(100% + 28px);
+      height: calc(100% + 28px);
+      background-image:
+        url('https://upload.wikimedia.org/wikipedia/commons/f/fd/David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg'),
+        url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg/1280px-David_-_Napoleon_crossing_the_Alps_-_Malmaison2.jpg');
+      background-size: cover;
+      background-position: center 22%;
+      filter: blur(1.8px) brightness(0.42) contrast(1.08) saturate(0.82) sepia(0.18);
+      transform: scale(1.02);
+    }
+    .bg-vignette-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 24%, rgba(214, 175, 118, 0.07) 0%, rgba(14, 12, 10, 0.72) 78%),
+        linear-gradient(180deg, rgba(14, 12, 10, 0.35) 0%, rgba(17, 14, 11, 0.58) 55%, rgba(12, 10, 8, 0.90) 100%);
+    }
+    .bg-tactical-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(240, 226, 204, 0.06) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(240, 226, 204, 0.06) 1px, transparent 1px);
+      background-size: 96px 96px;
+    }
+
+    /* КАРТОЧКИ В ТОНЕ КАРТИНЫ «БОНАПАРТ НА ПЕРЕВАЛЕ» */
+    .sector-container {
+      background: rgba(22, 19, 16, 0.76);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(235, 214, 182, 0.14);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(245, 232, 210, 0.09);
+    }
+
+    /* СТРОКИ-КНОПКИ ВНУТРИ БЛОКОВ КОНСТРУКТОРА И ОТВЕТОВ */
+    .row-pill {
+      background: rgba(31, 26, 22, 0.78);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(235, 214, 182, 0.11);
+      color: #f5f0e6;
+      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .row-pill:hover {
+      background: rgba(45, 38, 31, 0.88);
+      border-color: rgba(235, 214, 182, 0.28);
+    }
+    .row-pill.active {
+      background: #f5efe4 !important;
+      color: #14110e !important;
+      border-color: #f5efe4 !important;
+      box-shadow: 0 8px 28px rgba(245, 239, 228, 0.24);
+    }
+    .row-pill.active .right-meta {
+      color: #574c3f !important;
+      font-weight: 700;
+    }
+    .row-pill.active .sub-desc {
+      color: #4a4035 !important;
+    }
+    .row-pill.active .row-icon {
+      color: #14110e !important;
+    }
+
+    /* ВЕРХНИЕ ОВАЛЬНЫЕ ТАБЛЕТКИ В ШАПКЕ */
+    .top-pill {
+      background: rgba(22, 19, 16, 0.76);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(235, 214, 182, 0.16);
+      color: #ded4c3;
+      transition: all 0.15s ease;
+    }
+    .top-pill:hover {
+      border-color: rgba(245, 239, 228, 0.35);
+      color: #ffffff;
+    }
+    .top-pill.active {
+      background: #f5efe4;
+      color: #14110e;
+      border-color: #f5efe4;
+      font-weight: 800;
+      box-shadow: 0 0 20px rgba(245, 239, 228, 0.25);
+    }
+
+    /* Хроно-ползунок */
+    input[type=range].tactical-range {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: rgba(15, 13, 10, 0.92);
+      border-radius: 999px;
+      border: 1px solid rgba(235, 214, 182, 0.25);
+      outline: none;
+    }
+    input[type=range].tactical-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: #f5efe4;
+      border: 3px solid #14110e;
+      cursor: pointer;
+      box-shadow: 0 0 18px rgba(245, 239, 228, 0.65);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-[#f5f0e6] font-sans relative overflow-x-hidden selection:bg-[#f5efe4] selection:text-[#14110e]">
+
+  <!-- СЛОЙ ФОНА: КАРТИНА «БОНАПАРТ НА ПЕРЕВАЛЕ СЕН-БЕРНАР» (5-10% РАЗМЫТИЕ) + СЕТКА -->
+  <div class="bg-fixed-layer">
+    <div class="bg-napoleon-painting"></div>
+    <div class="bg-vignette-overlay"></div>
+    <div class="bg-tactical-grid"></div>
+
+    <!-- Плюсики на перекрестиях сетки -->
+    <div class="absolute top-[95px] left-[191px] text-[#e8dcc8]/25 font-mono text-xs">+</div>
+    <div class="absolute top-[95px] right-[191px] text-[#e8dcc8]/25 font-mono text-xs">+</div>
+    <div class="absolute top-[287px] left-[95px] text-[#e8dcc8]/20 font-mono text-xs">+</div>
+    <div class="absolute top-[287px] right-[287px] text-[#e8dcc8]/20 font-mono text-xs">+</div>
+    <div class="absolute bottom-[191px] left-[287px] text-[#e8dcc8]/20 font-mono text-xs">+</div>
+  </div>
+
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="relative z-10 max-w-4xl mx-auto px-4 pt-5 pb-12">
+
+    <!-- ========================================================================= -->
+    <!-- ПОСТОЯННАЯ ВЕРХНЯЯ ШАПКА HISTMATRIX // HIST DUEL 02™ -->
+    <!-- Клик по логотипу и названию возвращает в конструктор -->
+    <!-- ========================================================================= -->
+    <header class="pb-4 space-y-3">
+      <div class="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono tracking-[0.22em] text-[#cbbca4] uppercase">
+        <span class="w-2 h-2 rounded-full bg-[#d4af76] inline-block"></span>
+        <span>[ DOMAIN: HISTDUEL // CHRONO PROTOCOL 02 ]</span>
+      </div>
+
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <!-- Кликабельный логотип HISTMATRIX // HIST DUEL 02™ (Возвращает в конструктор) -->
+        <button
+          type="button"
+          onclick="setScreen('menu')"
+          class="flex items-center gap-3.5 text-left group focus:outline-none"
+          title="Вернуться в конструктор"
+        >
+          <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#f5efe4] text-[#14110e] flex items-center justify-center shrink-0 shadow-[0_0_28px_rgba(245,239,228,0.22)] group-hover:scale-105 transition">
+            <svg viewBox="0 0 32 32" fill="none" class="w-7 h-7 sm:w-8 sm:h-8">
+              <circle cx="16" cy="16" r="12" stroke="currentColor" stroke-width="2.2"/>
+              <ellipse cx="16" cy="16" rx="6" ry="12" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M4.5 12H27.5M4.5 20H27.5M16 4V28" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </div>
+
+          <div>
+            <div class="text-sm sm:text-xl font-bold tracking-[0.18em] text-[#d8cbb8] uppercase leading-none">
+              HISTMATRIX //
+            </div>
+            <div class="flex items-start gap-2 mt-1">
+              <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-[#f5efe4] uppercase leading-none">
+                HIST DUEL
+              </h1>
+              <span class="px-2 py-0.5 rounded-md bg-[#f5efe4] text-[#14110e] font-mono font-black text-[10px] sm:text-xs tracking-tight shadow">
+                02™
+              </span>
+            </div>
+          </div>
+        </button>
+
+        <!-- Правый ряд овальных таблеток -->
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            id="scopeBtn-RU"
+            onclick="setScope('RU')"
+            class="top-pill active px-3.5 py-1.5 rounded-xl font-mono text-[10px] sm:text-xs tracking-wider uppercase"
+          >
+            [ ИСТОРИЯ РОССИИ ]
+          </button>
+          <button
+            type="button"
+            id="scopeBtn-WORLD"
+            onclick="setScope('WORLD')"
+            class="top-pill px-3.5 py-1.5 rounded-xl font-mono text-[10px] sm:text-xs tracking-wider uppercase"
+          >
+            [ ВСЕОБЩАЯ ИСТОРИЯ ]
+          </button>
+          <button
+            type="button"
+            id="sfxToggleBtn"
+            onclick="toggleSfx()"
+            class="top-pill px-3.5 py-1.5 rounded-xl font-mono text-[10px] sm:text-xs tracking-wider uppercase font-bold"
+          >
+            SFX: ON
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- ЭКРАН 1: КОНСТРУКТОР (4 БЛОКА) -->
+    <!-- ========================================================================= -->
+    <div id="screen-menu" class="space-y-5">
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- 01 // ИСТОРИЧЕСКИЙ СЕКТОР -->
+        <section class="rounded-[26px] sector-container p-5 sm:p-6">
+          <div class="flex items-start justify-between gap-4 mb-4 pb-3 border-b border-[#ebd6b6]/10">
+            <div id="titleBlock01" class="font-mono text-xs tracking-[0.16em] text-[#cbbca4] uppercase leading-snug">
+              [ 01 // ИСТОРИЧЕСКИЙ СЕКТОР ]
+            </div>
+            <div id="poolBlock01" class="font-mono text-xs font-bold tracking-wider text-[#f5efe4] uppercase text-right shrink-0">
+              ПУЛ: 310 СОБЫТИЙ
+            </div>
+          </div>
+          <div id="gridRegions" class="space-y-2.5"></div>
+        </section>
+
+        <!-- 02 // ЧТО ДАНО (ВОПРОС) -->
+        <section class="rounded-[26px] sector-container p-5 sm:p-6">
+          <div class="flex items-start justify-between gap-4 mb-4 pb-3 border-b border-[#ebd6b6]/10">
+            <div id="titleBlock02" class="font-mono text-xs tracking-[0.16em] text-[#cbbca4] uppercase leading-snug">
+              [ 02 // ЧТО ДАНО (АРХИВ) ]
+            </div>
+            <div class="font-mono text-xs font-bold tracking-wider text-[#f5efe4] uppercase text-right shrink-0">
+              6 РЕЖИМОВ
+            </div>
+          </div>
+          <div id="gridQuestions" class="space-y-2.5"></div>
+        </section>
+
+        <!-- 03 // МЕХАНИКА ОТВЕТА -->
+        <section class="rounded-[26px] sector-container p-5 sm:p-6">
+          <div class="flex items-start justify-between gap-4 mb-4 pb-3 border-b border-[#ebd6b6]/10">
+            <div class="font-mono text-xs tracking-[0.16em] text-[#cbbca4] uppercase leading-snug">
+              [ 03 // МЕХАНИКА ОТВЕТА ]
+            </div>
+            <div class="font-mono text-xs font-bold tracking-wider text-[#f5efe4] uppercase text-right shrink-0">
+              ТОЧНЫЕ ДАТЫ
+            </div>
+          </div>
+          <div id="gridAnswers" class="space-y-2.5"></div>
+        </section>
+
+        <!-- 04 // РЕЖИМ ИГРЫ & ДУЭЛЬ 1 НА 1 -->
+        <section class="rounded-[26px] sector-container p-5 sm:p-6">
+          <div class="flex items-start justify-between gap-4 mb-4 pb-3 border-b border-[#ebd6b6]/10">
+            <div class="font-mono text-xs tracking-[0.16em] text-[#cbbca4] uppercase leading-snug">
+              [ 04 // РЕЖИМ & ДУЭЛЬ 1 НА 1 ]
+            </div>
+            <!-- Переключатель количества раундов (10 / 20 / 50 / ∞) -->
+            <div class="flex items-center gap-1 font-mono text-[10px]">
+              <span class="text-[#cbbca4] mr-1">РАУНДЫ:</span>
+              <button type="button" onclick="setTotalRounds(10)" id="roundBtn-10" class="px-2 py-0.5 rounded bg-[#f5efe4] text-[#14110e] font-bold">10</button>
+              <button type="button" onclick="setTotalRounds(20)" id="roundBtn-20" class="px-2 py-0.5 rounded bg-white/5 text-[#cbbca4]">20</button>
+              <button type="button" onclick="setTotalRounds(50)" id="roundBtn-50" class="px-2 py-0.5 rounded bg-white/5 text-[#cbbca4]">50</button>
+              <button type="button" onclick="setTotalRounds(999)" id="roundBtn-999" class="px-2 py-0.5 rounded bg-white/5 text-[#cbbca4]">∞</button>
+            </div>
+          </div>
+          <div id="gridModes" class="space-y-2.5"></div>
+        </section>
+
+      </div>
+
+      <!-- КНОПКА ЗАПУСКА МАТРИЦЫ -->
+      <div class="rounded-[26px] sector-container p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div id="footerArchiveBreakdown" class="text-xs font-mono text-[#cbbca4] tracking-wider uppercase text-center sm:text-left">
+          [ СЕКТОР ГОТОВ // ТОЧНЫЕ ДАТЫ АКТИВИРОВАНЫ ]
+        </div>
+        <button
+          type="button"
+          onclick="handleLaunchClick()"
+          class="w-full sm:w-auto px-9 py-4 rounded-2xl bg-[#f5efe4] hover:bg-white text-[#14110e] font-black text-sm sm:text-base uppercase tracking-wider flex items-center justify-center gap-2.5 transition transform active:scale-95 shadow-[0_0_30px_rgba(245,239,228,0.28)]"
+        >
+          <span id="launchBtnLabel">ЗАПУСТИТЬ МАТРИЦУ</span>
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ЭКРАН 2: ОНЛАЙН-ЛОББИ 1 НА 1 -->
+    <!-- ========================================================================= -->
+    <div id="screen-lobby" class="hidden max-w-xl mx-auto py-4">
+      <div class="rounded-[26px] sector-container p-6 sm:p-8 space-y-6">
+        <div class="flex items-center justify-between pb-4 border-b border-[#ebd6b6]/10">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 rounded-xl bg-[#f5efe4] text-[#14110e]">
+              <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none">
+                <circle cx="16" cy="16" r="3" fill="currentColor"/>
+                <path d="M10 22C6.8 18.8 6.8 13.2 10 10M22 10C25.2 13.2 25.2 18.8 22 22" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+                <path d="M6 25.5C1 20.5 1 11.5 6 6.5M26 6.5C31 11.5 31 20.5 26 25.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h2 class="text-xl font-black uppercase tracking-wider text-[#f5efe4]">ОНЛАЙН-ТЕРМИНАЛ 1 НА 1</h2>
+              <p class="text-xs font-mono text-[#cbbca4]">[ СИНХРОНИЗАЦИЯ КОМНАТЫ ПО КОДУ ]</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-5 rounded-2xl bg-black/45 border border-[#ebd6b6]/15 text-center space-y-3">
+          <div class="text-[11px] font-mono text-[#cbbca4] uppercase tracking-widest">
+            ВАШ КОД КОМНАТЫ ДЛЯ ДРУГА:
+          </div>
+          <div class="flex items-center justify-center gap-3">
+            <span id="roomCodeDisplay" class="text-4xl sm:text-5xl font-mono font-black tracking-widest text-[#f5efe4]">4815</span>
+            <button type="button" onclick="createPeerHost()" class="px-4 py-2 rounded-xl bg-[#f5efe4] text-[#14110e] font-mono font-black text-xs uppercase">
+              СОЗДАТЬ
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="block text-xs font-mono text-[#cbbca4] uppercase">
+            Или введите код комнаты соперника:
+          </label>
+          <div class="flex gap-2">
+            <input
+              id="joinCodeInput"
+              type="text"
+              maxlength="4"
+              placeholder="4815"
+              class="flex-1 px-4 py-3 rounded-xl bg-black/55 border border-[#ebd6b6]/20 font-mono text-lg text-center tracking-widest text-[#f5efe4] focus:outline-none"
+            />
+            <button
+              type="button"
+              onclick="joinPeerRoom()"
+              class="px-6 py-3 rounded-xl bg-[#f5efe4] text-[#14110e] font-black uppercase text-xs tracking-wider"
+            >
+              ПОДКЛЮЧИТЬСЯ
+            </button>
+          </div>
+        </div>
+
+        <div id="lobbyStatus" class="text-xs font-mono text-center text-[#d8cbb8]"></div>
+
+        <button
+          type="button"
+          onclick="startSession()"
+          class="w-full py-4 rounded-2xl bg-[#f5efe4] hover:bg-white text-[#14110e] font-black uppercase tracking-wider text-sm transition"
+        >
+          НАЧАТЬ ДУЭЛЬ СЕЙЧАС
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ЭКРАН 3: ИГРОВОЙ ЭКРАН -->
+    <!-- ========================================================================= -->
+    <div id="screen-play" class="hidden space-y-4">
+      <!-- Узкая полоса статуса раунда, комбо и очков -->
+      <div class="rounded-2xl sector-container px-5 py-3 flex flex-wrap items-center justify-between gap-3 font-mono text-xs">
+        <div id="playLeftStat" class="text-[#cbbca4]">
+          РАУНД: <strong class="text-[#f5efe4]">1 / 10</strong>
+        </div>
+        <div id="playRightStat" class="flex items-center gap-4">
+          <span class="text-[#cbbca4]">КОМБО: <strong class="text-emerald-400">×0</strong></span>
+          <span class="text-[#cbbca4]">ОЧКИ: <strong class="text-[#f5efe4]">0 PTS</strong></span>
+        </div>
+      </div>
+
+      <!-- Главный контейнер вопроса и карточек ответа -->
+      <div class="rounded-[26px] sector-container p-6 sm:p-8 flex flex-col items-center">
+        <div id="playHeaderSubtitle" class="text-[10px] sm:text-[11px] font-mono uppercase tracking-[0.2em] text-[#cbbca4] mb-5 text-center">
+          [ БАЗА +100 // СКОРОСТЬ ДО +50 // КОМБО-СТРИК +20× // ТОЧНАЯ ДАТА +75 ]
+        </div>
+
+        <!-- Визуальный центр вопроса -->
+        <div id="playQuestionPrompt" class="w-full flex flex-col items-center"></div>
+
+        <!-- Блок бонусного вопроса на точную дату (число и месяц) для режима ввода года -->
+        <div id="playExactDateBonusBox" class="hidden w-full max-w-xl mt-5 p-4 rounded-2xl bg-[#1a1612]/90 border border-[#d4af76]/40 space-y-3"></div>
+
+        <!-- Плашка результата ответа -->
+        <div id="playFeedbackBox" class="hidden mt-5 px-5 py-2.5 rounded-xl border font-mono text-xs sm:text-sm font-bold flex items-center gap-2 text-center"></div>
+
+        <!-- Механика ответа -->
+        <div id="playAnswerArea" class="w-full mt-6 flex flex-col items-center"></div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- ЭКРАН 4: ИТОГИ МАТЧА -->
+    <!-- ========================================================================= -->
+    <div id="screen-summary" class="hidden max-w-lg mx-auto py-6">
+      <div class="rounded-[26px] sector-container p-8 text-center space-y-6">
+        <div class="w-16 h-16 rounded-2xl bg-[#f5efe4] text-[#14110e] flex items-center justify-center mx-auto shadow-[0_0_25px_rgba(245,239,228,0.3)]">
+          <svg class="w-9 h-9" viewBox="0 0 32 32" fill="none">
+            <path d="M16 8L24.5 10.8V16.8C24.5 22.2 20.8 25.8 16 28C11.2 25.8 7.5 22.2 7.5 16.8V10.8L16 8Z" stroke="currentColor" stroke-width="2" fill="currentColor" fill-opacity="0.2"/>
+          </svg>
+        </div>
+        <h2 class="text-3xl font-black uppercase tracking-wider text-[#f5efe4]">
+          СКАНИРОВАНИЕ ЗАВЕРШЕНО
+        </h2>
+        <div id="summaryStatsContent"></div>
+        <div class="flex gap-3">
+          <button
+            type="button"
+            onclick="startSession()"
+            class="flex-1 py-3.5 rounded-xl bg-[#f5efe4] text-[#14110e] font-black uppercase text-xs tracking-wider"
+          >
+            ИГРАТЬ СНОВА
+          </button>
+          <button
+            type="button"
+            onclick="setScreen('menu')"
+            class="flex-1 py-3.5 rounded-xl bg-white/10 text-[#f5efe4] font-black uppercase text-xs tracking-wider border border-[#ebd6b6]/20"
+          >
+            В КОНСТРУКТОР
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // ==========================================
+    // АВТОНОМНЫЙ ЗВУКОВОЙ СИНТЕЗАТОР (SFX: ON / OFF)
+    // ==========================================
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+      init() {
+        if (!this.ctx && typeof window !== 'undefined') {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+      }
+      play(type) {
+        if (this.muted) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          if (this.ctx.state === 'suspended') this.ctx.resume();
+          const now = this.ctx.currentTime;
+          if (type === 'click') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(580, now);
+            osc.frequency.exponentialRampToValueAtTime(190, now + 0.04);
+            gain.gain.setValueAtTime(0.06, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.045);
+          } else if (type === 'correct') {
+            [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, now + i * 0.055);
+              gain.gain.setValueAtTime(0.10, now + i * 0.055);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.055 + 0.22);
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+              osc.start(now + i * 0.055);
+              osc.stop(now + i * 0.055 + 0.24);
+            });
+          } else if (type === 'wrong') {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(155, now);
+            osc.frequency.linearRampToValueAtTime(92, now + 0.25);
+            gain.gain.setValueAtTime(0.10, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.27);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.28);
+          }
+        } catch (e) {}
+      }
+    }
+    const sfx = new SoundEngine();
+
+    function toggleSfx() {
+      sfx.muted = !sfx.muted;
+      const btn = document.getElementById('sfxToggleBtn');
+      btn.textContent = sfx.muted ? 'SFX: OFF' : 'SFX: ON';
+      btn.classList.toggle('opacity-50', sfx.muted);
+      if (!sfx.muted) sfx.play('click');
+    }
+
+    // ==========================================
+    // КАСТОМНЫЕ ВЕКТОРНЫЕ ИКОНКИ
+    // ==========================================
+    function getTacticalSvg(name, extraClass = 'w-6 h-6') {
+      switch (name) {
+        case 'world':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><circle cx="16" cy="16" r="12.5" stroke="currentColor" stroke-width="2"/><ellipse cx="16" cy="16" rx="6.5" ry="12.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 11.5H28M4 20.5H28M16 3.5V28.5M3.5 16H28.5" stroke="currentColor" stroke-width="1.5"/></svg>`;
+        case 'ussr':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M16 2L17.3 4.8L20.3 5.1L18.1 7.1L18.7 10L16 8.5L13.3 10L13.9 7.1L11.7 5.1L14.7 4.8L16 2Z" fill="currentColor"/><path d="M24.2 26.2L10.5 12.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M6.8 14.2L13.2 7.8L15.8 10.4L10.2 16L6.8 14.2Z" fill="currentColor"/><path d="M18.5 9C25.2 10.5 27.2 18.5 22 23.2C17.5 27.2 10.5 26 7.6 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
+        case 'compass':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><circle cx="16" cy="16" r="12.5" stroke="currentColor" stroke-width="1.9"/><path d="M16 5.5L18.6 13.4L26.5 16L18.6 18.6L16 26.5L13.4 18.6L5.5 16L13.4 13.4L16 5.5Z" stroke="currentColor" stroke-width="1.6" fill="currentColor" fill-opacity="0.18" stroke-linejoin="round"/><circle cx="16" cy="16" r="2" fill="currentColor"/></svg>`;
+        case 'flag_q':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M6 4V28" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M6 5.5L26.5 14L6 22.5V5.5Z" stroke="currentColor" stroke-width="1.9" fill="currentColor" fill-opacity="0.18" stroke-linejoin="round"/></svg>`;
+        case 'crest':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M11 4.5L12.5 7H19.5L21 4.5L18.5 5.5L16 3.8L13.5 5.5L11 4.5Z" stroke="currentColor" stroke-width="1.5" fill="currentColor"/><path d="M16 8L24.5 10.8V16.8C24.5 22.2 20.8 25.8 16 28C11.2 25.8 7.5 22.2 7.5 16.8V10.8L16 8Z" stroke="currentColor" stroke-width="1.9" fill="currentColor" fill-opacity="0.16" stroke-linejoin="round"/></svg>`;
+        case 'contour':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M7 9.5L13.5 5.5L21 8L26.5 6.5L24.5 14.5L27 20.5L20.5 26.5L13 24L6.5 26L4.5 18L7 9.5Z" stroke="currentColor" stroke-width="1.9" fill="currentColor" fill-opacity="0.16" stroke-linejoin="round"/></svg>`;
+        case 'capital':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><circle cx="16" cy="16" r="12.5" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 25V16H11.5V25M12 25V12.5H19.5V25M20 25V15.5H24.5V25" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>`;
+        case 'map_radar':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><circle cx="16" cy="16" r="10.5" stroke="currentColor" stroke-width="1.8"/><circle cx="16" cy="16" r="4" fill="currentColor" fill-opacity="0.3" stroke="currentColor" stroke-width="1.6"/><path d="M16 2.5V7.5M16 24.5V29.5M2.5 16H7.5M24.5 16H29.5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>`;
+        case 'name_tag':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M9 7H5V25H9M23 7H27V25H23" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 11.5H21M16 11.5V21.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+        case 'choices_4':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><rect x="4.5" y="4.5" width="9.5" height="9.5" rx="2" stroke="currentColor" stroke-width="1.8" fill="currentColor" fill-opacity="0.25"/><rect x="18" y="4.5" width="9.5" height="9.5" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="4.5" y="18" width="9.5" height="9.5" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="18" y="18" width="9.5" height="9.5" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>`;
+        case 'terminal_input':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><rect x="3.5" y="6" width="25" height="20" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.5L13 16L8.5 19.5M15.5 19.5H22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        case 'duel_swords':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M6 26L25 7M25 7H18.5M25 7V13.5" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/><path d="M26 26L7 7M7 7H13.5M7 7V13.5" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        case 'blitz_bolt':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M17.5 3.5L7.5 17.5H15.5L14 28.5L24.5 14.5H16.5L17.5 3.5Z" stroke="currentColor" stroke-width="1.9" fill="currentColor" fill-opacity="0.2" stroke-linejoin="round"/></svg>`;
+        case 'shield_life':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><path d="M16 4L25.5 7.8V15.5C25.5 21.8 21.2 26 16 28.5C10.8 26 6.5 21.8 6.5 15.5V7.8L16 4Z" stroke="currentColor" stroke-width="1.9" fill="currentColor" fill-opacity="0.22"/></svg>`;
+        case 'net_link':
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><circle cx="16" cy="16" r="3" fill="currentColor"/><path d="M10 22C6.8 18.8 6.8 13.2 10 10M22 10C25.2 13.2 25.2 18.8 22 22" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M6 25.5C1 20.5 1 11.5 6 6.5M26 6.5C31 11.5 31 20.5 26 25.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`;
+        default:
+          return `<svg viewBox="0 0 32 32" fill="none" class="${extraClass}"><circle cx="16" cy="16" r="10" stroke="currentColor" stroke-width="1.8"/></svg>`;
+      }
+    }
+
+    // ==========================================
+    // ТОЧНЫЕ ДАТЫ (ЧИСЛО + МЕСЯЦ) ДЛЯ КЛЮЧЕВЫХ СОБЫТИЙ
+    // ==========================================
+    const EXACT_DATES_MAP = {
+      'RU_1240_Невская': '15 июля',
+      'RU_1242_Ледовое': '5 апреля',
+      'RU_1378_Воже': '11 августа',
+      'RU_1380_Куликовская': '8 сентября',
+      'RU_1471_Шелони': '14 июля',
+      'RU_1480_Угре': '11 ноября',
+      'RU_1547_Венчание': '16 января',
+      'RU_1552_Казани': '2 октября',
+      'RU_1612_Московская': '4 ноября',
+      'RU_1613_Земский': '21 февраля',
+      'RU_1654_Переяславская': '8 января',
+      'RU_1700_Нарвой': '19 ноября',
+      'RU_1703_Санкт-Петербурга': '16 мая',
+      'RU_1708_Лесной': '28 сентября',
+      'RU_1709_Полтавская': '27 июня',
+      'RU_1714_Гангутское': '27 июля',
+      'RU_1721_Ништадтский': '30 августа',
+      'RU_1722_Табели': '24 января',
+      'RU_1755_Московского': '12 января',
+      'RU_1762_вольности': '18 февраля',
+      'RU_1770_Чесменском': '26 июня',
+      'RU_1783_Крыма': '8 апреля',
+      'RU_1790_Измаил': '11 декабря',
+      'RU_1807_Тильзитский': '25 июня',
+      'RU_1812_Бородинское': '26 августа',
+      'RU_1814_Парижа': '19 марта',
+      'RU_1820_Антарктиды': '16 января',
+      'RU_1825_декабристов': '14 декабря',
+      'RU_1853_Синопское': '18 ноября',
+      'RU_1861_Отмена': '19 февраля',
+      'RU_1864_Судебная': '20 ноября',
+      'RU_1881_Александра': '1 марта',
+      'RU_1904_Варяг': '27 января',
+      'RU_1905_Манифест': '17 октября',
+      'RU_1906_Столыпина': '9 ноября',
+      'RU_1914_Первую': '1 августа',
+      'RU_1916_Брусиловский': '4 июня',
+      'RU_1917_Февральская': '2 марта',
+      'RU_1917_Октябрьская': '25 октября',
+      'RU_1918_Брестский': '3 марта',
+      'RU_1922_СССР': '30 декабря',
+      'RU_1941_Начало': '22 июня',
+      'RU_1941_Москву': '5 декабря',
+      'RU_1942_Сталинградская': '19 ноября',
+      'RU_1943_Курская': '5 июля',
+      'RU_1944_Ленинграда': '27 января',
+      'RU_1945_Победы': '9 мая',
+      'RU_1949_атомной': '29 августа',
+      'RU_1957_спутника': '4 октября',
+      'RU_1961_космос': '12 апреля',
+      'RU_1965_открытый': '18 марта',
+      'RU_1991_Распад': '25 декабря',
+      'RU_1993_Конституции': '12 декабря',
+
+      'WORLD_-44_Цезаря': '15 марта',
+      'WORLD_1453_Константинополя': '29 мая',
+      'WORLD_1492_Америки': '12 октября',
+      'WORLD_1517_Лютера': '31 октября',
+      'WORLD_1572_Варфоломеевская': '24 августа',
+      'WORLD_1649_Карла': '30 января',
+      'WORLD_1776_Декларации': '4 июля',
+      'WORLD_1787_Конституции': '17 сентября',
+      'WORLD_1789_Бастилии': '14 июля',
+      'WORLD_1799_брюмера': '9 ноября',
+      'WORLD_1805_Аустерлицем': '2 декабря',
+      'WORLD_1815_Ватерлоо': '18 июня',
+      'WORLD_1871_Германской': '18 января',
+      'WORLD_1914_Сараевское': '28 июня',
+      'WORLD_1918_Компьенское': '11 ноября',
+      'WORLD_1919_Версальский': '28 июня',
+      'WORLD_1929_биржи': '29 октября',
+      'WORLD_1939_Второй': '1 сентября',
+      'WORLD_1941_Перл-Харбор': '7 декабря',
+      'WORLD_1944_Нормандии': '6 июня',
+      'WORLD_1945_мировой': '2 сентября',
+      'WORLD_1949_Китайской': '1 октября',
+      'WORLD_1969_Луну': '20 июля',
+      'WORLD_1989_Берлинской': '9 ноября'
+    };
+
+    function stripDateSpoilers(str) {
+      if (!str) return '';
+      return str
+        .replace(/\s*\([^)]*\d+[^)]*\)/g, '')
+        .replace(/\b\d{1,2}\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)\s+\d{3,4}\s*(г\.|года)?/gi, '')
+        .replace(/\b(в|до|с|после)\s+\d{3,4}\s*(г\.|году|года|гг\.)?/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+    }
+
+    function findExactDayMonth(scope, year, eventText) {
+      for (const [key, dayMonth] of Object.entries(EXACT_DATES_MAP)) {
+        const [kScope, kYear, kWord] = key.split('_');
+        if (kScope === scope && parseInt(kYear, 10) === year && eventText.includes(kWord)) {
+          return dayMonth;
+        }
+      }
+      return null;
+    }
+
+    function unpackCompactDB(rawString, scope, era) {
+      return rawString.trim().split('\n').filter(Boolean).map((line, idx) => {
+        const [yearStr, rawEvent, person, rawSummary, quote] = line.split('|').map(s => s.trim());
+        const year = parseInt(yearStr, 10);
+        const dayMonth = findExactDayMonth(scope, year, rawEvent);
+        const cleanEvent = stripDateSpoilers(rawEvent);
+        const cleanSummary = stripDateSpoilers(rawSummary);
+        return {
+          id: `${scope}_${era}_${idx}`,
+          year,
+          dayMonth,
+          scope,
+          era,
+          event: cleanEvent,
+          person,
+          summary: cleanSummary,
+          quote: stripDateSpoilers(quote || `«${cleanSummary}»`)
+        };
+      });
+    }
+
+    // ==========================================
+    // БАЗА ИСТОРИИ РОССИИ
+    // ==========================================
+    const RU_E1_RAW = `
+860|Поход русов на Константинополь при патриархе Фотии|Аскольд и Дир|Первое крупное морское выступление русов против столицы Византии.|Росы подступили к стенам Царьграда на двухстах кораблях
+862|Призвание варягов в Новгород и Ладогу|Князь Рюрик|Начало княжения Рюрика и зарождение династии Рюриковичей.|Земля наша велика и обильна, а наряда в ней нет
+882|Объединение Новгорода и Киева в Древнерусское государство|Вещий Олег|Захват Киева князем Олегом и перенос столицы на Днепр.|Да будет Киев матерью городам русским!
+907|Триумфальный поход Вещего Олега на Царьград|Вещий Олег|Морской и сухопутный поход на Византию, щит на вратах Царьграда.|Прибил свой щит на вратах Царьграда в знак победы
+911|Первый письменный русско-византийский договор|Вещий Олег|Заключение равноправного союзного и торгового договора с империей.|Иметь любовь и мир между христианами и Русью
+941|Поход князя Игоря на Константинополь|Игорь Старый|Морское сражение русского флота с византийскими кораблями, применившими «греческий огонь».|Греки пустили огонь по трубам на ладьи русские
+945|Восстание древлян и налоговая реформа Ольги|Княгиня Ольга|Установление твердых размеров дани («уроков») и мест сбора («погостов»).|Больше уже не буду мстить, но хочу взять с вас дань малую
+957|Посольство и крещение княгини Ольги в Константинополе|Княгиня Ольга|Дипломатический визит правительницы Руси ко двору Константина Багрянородного.|Благословенна ты в женах русских
+964|Восточный поход Святослава на Оку и Волгу|Святослав Игоревич|Подчинение вятичей и разгром Волжской Булгарии дружиной Святослава.|Иду на Вы!
+965|Разгром Хазарского каганата и взятие Саркела|Святослав Игоревич|Сокрушение столицы хазар Итиля и крепости Саркел (Белая Вежа).|Не посрамим земли Русской, но ляжем здесь костьми
+968|Отражение осады Киева печенегами и Дунайский поход|Святослав Игоревич|Поход в Болгарию и стремление перенести центр державы в Переяславец на Дунае.|Мертвые сраму не имут!
+971|Героическая оборона Доростола на Дунае|Святослав Игоревич|Битва русов против превосходящей армии императора Иоанна Цимисхия.|Если побежим — позор нам будет, так станем же крепко!
+980|Вокняжение Владимира в Киеве и языческая реформа|Владимир Святославич|Утверждение единого пантеона шести богов во главе с Перуном в Киеве.|Поставил кумиры на холме вне двора теремного
+981|Присоединение Червенских городов к Руси|Владимир Святославич|Западный поход Владимира Святославича и укрепление границ.|Иде Владимир к ляхам и зая грады их
+988|Крещение Руси|Владимир Святославич|Принятие православия как государственной религии Древней Руси.|Если кто не придет завтра на реку — да будет мне враг
+989|Завершение строительства Десятинной церкви в Киеве|Владимир Святославич|Возведение первого каменного храма Успения Богородицы на Руси.|Даю церкви этой Святой Богородицы десятую часть от богатств моих
+1015|Междоусобная борьба сыновей Владимира|Борис и Глеб / Святополк|Гибель князей Бориса и Глеба, ставших первыми русскими святыми.|Не подниму руки на брата своего старшего
+1019|Победа Ярослава Мудрого в битве на реке Альте|Ярослав Мудрый|Утверждение Ярослава Владимировича на киевском великокняжеском столе.|И утер Ярослав пот с дружиною своею, показав победу
+1024|Лиственская битва между Ярославом и Мстиславом|Ярослав Мудрый / Мстислав Тмутараканский|Раздел Русской земли по Днепру между братьями.|Разделили по Днепру Русскую землю и начали жить мирно
+1030|Основание города Юрьева в Чудской земле|Ярослав Мудрый|Поход Ярослава Мудрого на чудь и укрепление северо-западных рубежей.|Пошел Ярослав на чудь и поставил град Юрьев
+1036|Окончательный разгром печенегов под стенами Киева|Ярослав Мудрый|Решающая победа русского войска, навсегда прекратившая набеги печенегов.|Была сеча злая, и едва одолел к вечеру Ярослав
+1037|Закладка Софийского собора и Золотых ворот в Киеве|Ярослав Мудрый|Создание первой библиотеки и переписка книг при Софийском соборе.|Велика ведь бывает польза от учения книжного
+1051|Поставление первого русского митрополита Илариона|Митрополит Иларион|Создание «Слова о законе и благодати» и укрепление церковной самостоятельности.|Не в худой и неведомой земле владычествовали
+1054|Завещание Ярослава Мудрого и лествичная система|Ярослав Мудрый|Раздел земель между сыновьями Изяславом, Святославом и Всеволодом.|Если будете жить в любви между собой, Бог будет в вас
+1068|Битва на реке Альте с половцами и Киевское восстание|Изяслав Ярославич|Первое крупное вторжение половцев и вечевое выступление киевлян.|Дай, княже, оружие и коней, мы еще побьемся с ними
+1072|Принятие «Правды Ярославичей» в Вышгороде|Изяслав, Святослав и Всеволод|Отмена кровной мести и защита княжеского хозяйства в Русской Правде.|Отложили убиение за голову, но кунами искупатися
+1097|Любечский съезд русских князей|Владимир Мономах|Провозглашение принципа вотчинного владения для прекращения усобиц.|Каждый да держит отчину свою!
+1103|Долобский съезд и поход в половецкую степь|Владимир Мономах / Святополк|Объединение дружин для упреждающих ударов по кочевьям половцев.|Весной выйдет смерд в поле пахать, а половчин ударит его стрелою
+1111|Крестовый поход в степь и битва при Сальнице|Владимир Мономах|Сокрушительный разгром половецких орд в глубине Дикого поля.|Ангел невидимо поражал половцев перед полками русскими
+1113|Вокняжение Владимира Мономаха и «Устав о резах»|Владимир Мономах|Призвание Мономаха в Киев и ограничение ростовщических процентов.|Не давайте сильным губить человека
+1125|Начало самостоятельного княжения Юрия Долгорукого в Суздале|Юрий Долгорукий|Перенос столицы Ростово-Суздальской земли в Суздаль и градостроительство.|Укрепил Юрий землю Залесскую градами новыми
+1136|Установление боярской республики в Великом Новгороде|Всеволод Мстиславич|Изгнание князя Всеволода и переход верховной власти к Новгородскому вечу.|Новгородцы призвали псковичей и ладожан и указали князю путь
+1147|Первое летописное упоминание Москвы|Юрий Долгорукий|Встреча Юрия Долгорукого с князем Святославом Ольговичем в Москве.|Приди ко мне, брате, в Москов!
+1158|Закладка Успенского собора во Владимире|Андрей Боголюбский|Масштабное белокаменное строительство во Владимиро-Суздальском княжестве.|Украсил Владимир золотыми вратами и храмами дивными
+1169|Взятие Киева войсками Андрея Боголюбского|Андрей Боголюбский|Перенос политического центра Северо-Восточной Руси во Владимир-на-Клязьме.|Князь Андрей сделал Владимир стольным градом
+1185|Поход новгород-северского князя Игоря на половцев|Игорь Святославич|Героический поход, ставший сюжетом «Слова о полку Игореве».|Луце ж бы потяту быти, неже полонену быти!
+1216|Липицкая битва в Северо-Восточной Руси|Мстислав Удатный / Константин Всеволодович|Крупнейшее междоусобное сражение сыновей Всеволода Большое Гнездо.|О, великая победа, братья, и страшное побоище!
+`;
+
+    const RU_E2_RAW = `
+1223|Битва на реке Калке|Мстислав Удатный|Первое сражение русских князей и половцев против монгольского корпуса Субэдэя и Джэбэ.|Сегодня они отняли землю половецкую, а завтра возьмут нашу
+1237|Начало Батыева нашествия и героическая оборона Рязани|Евпатий Коловрат / Хан Батый|Шестидневная защита Рязани и легендарный рейд дружины Евпатия Коловрата.|Испьем чашу смертную за землю Рязанскую!
+1238|Оборона Владимира, битва на реке Сити и защита Козельска|Юрий Всеволодович|Гибель владимирской рати на Сити и семинедельная оборона «злого града» Козельска.|Козельск же не предадим врагу ни за что
+1240|Невская битва|Александр Невский|Внезапный удар дружины князя Александра по шведскому лагерю ярла Биргера в устье Ижоры.|Не в силе Бог, но в правде!
+1242|Ледовое побоище на Чудском озере|Александр Невский|Разгром «свиньи» рыцарей Ливонского ордена на льду Чудского озера.|Кто с мечом к нам придет, от меча и погибнет!
+1245|Битва под Торопцем и разгром литовских отрядов|Александр Невский|Отражение литовских набегов на северо-западные земли Руси.|И бил их князь Александр без числа под Торопцем
+1257|Ордынская перепись населения («число») на Руси|Александр Невский|Установление регулярного сбора ордынского выхода баскаками.|И сочли численники татарские всю землю Русскую
+1262|Антиордынские вечевые восстания в Ростове, Владимире и Суздале|Александр Невский|Изгнание откупщиков дани горожанами и поездка Невского в Орду для предотвращения карательного похода.|Отмолил князь Александр людей от беды ордынской
+1268|Раковорская битва|Довмонт Псковский / Дмитрий Переяславский|Сокрушительная победа русских полков над объединенным войском Ливонии и Датской Эстляндии.|Была сеча лютая, какой не видали отцы наши
+1276|Образование самостоятельного Московского княжества|Даниил Александрович|Начало княжения младшего сына Александра Невского в Москве.|Первый удельный князь Московский, миролюбец и собиратель
+1299|Перенос резиденции митрополита из Киева во Владимир|Митрополит Максим|Перемещение духовного центра Руси в Северо-Восточные земли.|Митрополит Максим перешел со всем клиром во Владимир
+1301|Присоединение Коломны к Московскому княжеству|Даниил Александрович|Первое территориальное приобретение Москвы в устье Москвы-реки.|Москва берет под контроль течение Москвы-реки
+1302|Присоединение Переяславского княжества к Москве|Юрий Данилович|Московское княжество получает контроль над крупным уделом Северо-Восточной Руси.|Увеличилась держава Московская вдвое
+1317|Бортеневская битва|Михаил Ярославич Тверской|Победа тверского князя Михаила над войском Юрия Московского и ордынца Кавгадыя.|Постоял за отчину свою и людей тверских
+1325|Перенос митрополичьей кафедры из Владимира в Москву|Иван I Калита / Митрополит Петр|Превращение Москвы в духовную столицу всея Руси.|Аще меня послушаешь и храм Пречистой воздвигнешь, прославишься паче иных князей
+1327|Тверское антиордынское восстание против Чолхана|Иван I Калита|Переход ярлыка на великое княжение Владимирское к Ивану Калите.|И бысть оттоле тишина великая на 40 лет, и престаша поганые воевати Русскую землю
+1340|Начало великого княжения Симеона Гордого|Симеон Иванович Гордый|Продолжение политики собирания русских земель сыновьями Калиты.|Свеча не угасла в доме Калиты
+1367|Постройка белокаменного Московского Кремля|Дмитрий Иванович Донской|Возведение первой каменной крепости в Москве, отразившей походы Ольгерда.|Заложил князь Дмитрий град Москву каменный
+1375|Поход Дмитрия Московского на Тверь и признание верховенства Москвы|Дмитрий Иванович Донской|Тверской князь Михаил признает себя «младшим братом» московского князя.|Быть нам в союзе против татар заедино
+1377|Битва на реке Пьяне|Дмитрий Донской|Поражение беспечного русского войска от ордынского царевича Арапши.|Забыли страх ратный и доспехи на телеги сложили
+1378|Битва на реке Воже|Дмитрий Донской|Первая крупная полевая победа московской рати над ордынским войском мурзы Бегича.|Поганые бежали за реку Вожу, бросая копья свои
+1380|Куликовская битва|Дмитрий Донской / Владимир Серпуховской|Разгром войска Мамая на поле Куликовом после удара Засадного полка.|Лучше честная смерть, чем позорная жизнь!
+1382|Поход хана Тохтамыша и разорение Москвы|Хан Тохтамыш / Князь Остей|Осада и взятие Москвы обманом войсками золотоордынского хана Тохтамыша.|Тохтамыш клятвой ложной выманил горожан из ворот
+1392|Присоединение Нижегородского княжества к Москве|Василий I Дмитриевич|Расширение владений Москвы на Средней Волге и Оке.|Нижний Новгород вошел под руку великого князя Московского
+1395|Поход Тамерлана к пределам Руси и встреча Владимирской иконы|Василий I Дмитриевич|Остановка армии Железного Хромца у Ельца и его отход в степь.|Тамерлан повернул полки свои от границ русских
+1408|Нашествие эмира Едигея на Русь|Василий I Дмитриевич|Безуспешная осада белокаменного Кремля ордынским временщиком Едигеем.|Кремль выстоял перед ордынской ратью
+1425|Начало феодальной войны в Московском княжестве|Василий II Темный|Победа принципа прямого престолонаследия от отца к сыну над удельным порядком.|Утверждение единовластия великого князя Московского
+1439|Отказ Москвы от Флорентийской унии с католичеством|Василий II Темный|Низложение митрополита Исидора и сохранение чистоты православия.|Не приняли латинской прелести на Руси
+1448|Установление автокефалии Русской церкви|Митрополит Иона|Избрание митрополита собором русских епископов в Москве без согласия Константинополя.|Самостоятельность Русской православной церкви
+1462|Начало правления Ивана III Великого — «Государя всея Руси»|Иван III Великий|Присоединение Ярославского и Ростовского княжеств к Москве.|Собиратель Земли Русской и созидатель державы
+1471|Московско-новгородская война и битва на реке Шелони|Иван III / Даниил Холмский|Разгром новгородского ополчения московской ратью и Коростынский мир.|Новгородская боярская вольница склонилась перед Москвой
+1472|Брак Ивана III с Софьей Палеолог и принятие двуглавого орла|Иван III Великий|Утверждение двуглавого орла на государственной печати России.|Москва — преемница православного Царьграда
+1478|Окончательное присоединение Великого Новгорода к Москве|Иван III Великий|Ликвидация вечевого строя и вхождение всех новгородских земель в Русское государство.|Вечу колоколу в Новгороде не быти, посаднику не быти, а государству всему нашему быти
+1480|Стояние на реке Угре и падение ордынского ига|Иван III Великий|Отражение похода хана Большой Орды Ахмата и обретение полного суверенитета.|Наше государство отныне никому дани не дает!
+1485|Присоединение Тверского княжества к Москве|Иван III Великий|Прекращение многовекового соперничества Москвы и Твери.|Тверская земля вошла в состав единой державы Московской
+1497|Издание Судебника Ивана III|Иван III Великий|Первый общерусский свод законов единого государства и введение Юрьева дня.|Крестьянам отказываться из волости в волость один срок в году — за неделю до Юрьева дня и неделю после
+1500|Ведрошская битва в русско-литовской войне|Даниил Щеня / Иван III|Разгром литовской армии и возвращение Чернигово-Северских земель.|Вернулись древние грады Чернигов, Брянск и Стародуб к Москве
+1510|Присоединение Пскова к Московскому государству|Василий III Иванович|Снятие вечевого колокола во Пскове и завершение объединения северо-запада.|Сняли вечевой колокол у святой Троицы во Пскове
+1514|Возвращение Смоленска в состав России|Василий III Иванович|Взятие стратегической крепости Смоленск и основание Новодевичьего монастыря.|Смоленск — ожерелье и ключ земли Русской возвращен в отчину
+1521|Присоединение Рязанского княжества к Москве|Василий III Иванович|Завершение объединения великорусских земель вокруг Москвы.|Вся Русская земля собрана под единой рукой государя
+`;
+
+    const RU_E3_RAW = `
+1535|Денежная реформа Елены Глинской|Елена Глинская|Введение единой общерусской монетной системы — серебряной «копейки».|Повелела государыня чеканить новую деньгу копейную с всадником
+1547|Венчание Ивана IV Грозного на царство|Иван IV Грозный / Митрополит Макарий|Принятие первого официального титула Царя и Великого князя всея Руси.|Божиею милостию Цаь и Великий князь всея Руси
+1549|Созыв первого Земского собора («Собор примирения»)|Иван IV / Алексей Адашев|Переход к сословно-представительной монархии и начало реформ Избранной рады.|Государь созвал всяких чинов людей для земского устроения
+1550|Принятие Судебника Ивана IV и учреждение стрелецкого войска|Иван IV Грозный|Создание постоянного войска «выборных пищальников» и тысячной реформы.|Учредил государь три тысячи выборных стрельцов с огненным боем
+1551|Стоглавый церковный собор в Москве|Митрополит Макарий / Иван IV|Унификация церковных обрядов, иконописи и канонизация святых.|Собран собор в палатах царских о церковном благочинии в 100 главах
+1552|Взятие Казани войсками Ивана Грозного|Иван IV Грозный / Иван Выродков|Штурм Казани с подрывом стен и строительство храма Василия Блаженного.|Казанское царство взято, и заложили храм Покрова на Рву
+1556|Присоединение Астраханского ханства и «Уложение о службе»|Иван IV Грозный|Полное вхождение всего бассейна Волги в состав России и регламентация службы дворян.|С каждых ста четвертей доброй земли — конник в полном доспехе
+1558|Начало Ливонской войны за выход к Балтийскому морю|Иван IV Грозный|Взятие Нарвы, Дерпта и разгром Ливонского ордена на первом этапе войны.|Борьба за морские пристани и прямую торговлю на Балтике
+1564|Выход первой датированной печатной книги «Апостол» в Москве|Иван Федоров и Петр Мстиславец|Начало государственного книгопечатания на Московском печатном дворе.|Друкарь книг пред тем невиданных в царствующем граде Москве
+1565|Учреждение опричнины|Иван IV Грозный|Разделение страны на земщину и государев удел — опричнину.|Учинил себе государь опричнину и двор особый
+1572|Битва при Молодях и отмена опричнины|Михаил Воротынский / Дмитрий Хворостинин|Полное уничтожение армии Девлет-Гирея у гуляй-города в 50 верстах от Москвы.|Разбили крымского царя наголову, и убежал он с малой дружиной
+1581|Героическая оборона Пскова и начало Сибирского похода Ермака|Иван Шуйский / Ермак Тимофеевич|Отражение 31 штурма армии Стефана Батория и разгром хана Кучума дружиной Ермака.|Поклон государю от казаков Ермака с товарищами Сибирским царством!
+1584|Основание города Архангельска в устье Северной Двины|Федор Иванович|Создание первого крупного морского порта России для торговли с Европой.|Поставили новый град у Белого моря для корабельной пристани
+1589|Учреждение Патриаршества в России|Патриарх Иов / Борис Годунов|Избрание первого Патриарха Московского и всея Руси Иова.|Москва стала пятым православным патриархатом
+1591|Угличское дело и пресечение московской ветви Рюриковичей|Царевич Дмитрий|Гибель младшего сына Ивана Грозного в Угличе.|В Угличе ударили в набат по царевичу Дмитрию
+1597|Указ об «урочных летах» (пятилетний сыск беглых крестьян)|Борис Годунов / Федор Иванович|Важный этап оформления крепостного права в Русском государстве.|Беглых крестьян сыскивати по суду за пять лет
+1598|Избрание Бориса Годунова на царство Земским собором|Борис Годунов|Окончание династии Рюриковичей и воцарение Бориса Федоровича Годунова.|Вся земля упросила Бориса Федоровича принять скипетр царский
+1604|Вторжение Лжедмитрия I и начало Смуты|Лжедмитрий I (Григорий Отрепьев)|Поход самозванца на Москву при поддержке польских магнатов.|Настало лихолетье и шатание великое в государстве
+1606|Воцарение Василия Шуйского и восстание Ивана Болотникова|Василий Шуйский / Иван Болотников|Крестоцеловальная запись царя Василия Шуйского и осада Москвы армией Болотникова.|Царь Василий дал запись не казнить никого без боярского суда
+1608|Тушинский лагерь Лжедмитрия II и осада Троице-Сергиевой лавры|Лжедмитрий II / Авраамий Палицын|Героическая защита Троице-Сергиева монастыря от тушинцев Сапеги и Лисовского.|Обитель преподобного Сергия выстояла против всех приступов
+1609|Героическая оборона Смоленска и поход Скопина-Шуйского|Михаил Шеин / Михаил Скопин-Шуйский|Двадцатимесячная оборона Смоленска от короля Сигизмунда III и снятие блокады Москвы.|Умрем за веру православную, а града Смоленска королю не сдадим!
+1610|Клушинская битва, свержение Шуйского и «Семибоярщина»|Патриарх Гермоген|Призывы патриарха Гермогена к всенародному восстанию против интервентов.|Благословляю всех постоять за веру православную до смерти!
+1612|Московская битва и освобождение Кремля Вторым ополчением|Кузьма Минин и Дмитрий Пожарский|Разгром гетмана Ходкевича и капитуляция польского гарнизона в Кремле.|Купно за едино! Освободили стольный град Москву от иноземцев
+1613|Великий Земский собор и избрание Михаила Романова на царство|Михаил Федорович Романов / Иван Сусанин|Начало правления династии Романовых и подвиг Ивана Сусанина.|Куда ты завел нас, Сусанин-герой? — Туда, где погибель врагам!
+1617|Столбовский мир со Швецией|Михаил Федорович|Возвращение России Новгорода и выход из войны со Швецией.|Государство Российское вышло из великого разорения Смуты
+1618|Деулинское перемирие с Речью Посполитой|Михаил Федорович / Патриарх Филарет|Завершение польской интервенции и возвращение из плена отца царя — Филарета.|Вернулся владыка Филарет в стольный град Москву
+1632|Смоленская война за возвращение западных земель|Михаил Шеин|Поляновский мир, по которому король Владислав IV отказался от претензий на русский трон.|Король польский навечно отрекся от титула царя Московского
+1637|«Азовское сидение» донских казаков|Осип Петров / Наум Васильев|Взятие турецкой крепости Азов казаками и отражение осады огромной османской армии.|Отбили казаки двадцать четыре приступа султанской рати
+1648|Соляной бунт в Москве и экспедиция Семена Дежнева|Алексей Михайлович / Семен Дежнев|Открытие пролива между Азией и Америкой и созыв Земского собора для принятия Уложения.|Прошел казак Дежнев морем вокруг Большого Каменного Носа
+1649|Принятие Соборного уложения царя Алексея Михайлович|Алексей Михайлович / Никита Одоевский|Печатный свод законов из 25 глав, оформивший бессрочный сыск крестьян.|Чтоб всяких чинов людям Московского государства суд и расправа была во всем ровна
+1653|Церковная реформа патриарха Никона и начало раскола|Патриарх Никон / Протопоп Аввакум|Исправление богослужебных книг по греческим образцам и замена двуперстия троеперстием.|Велел патриарх Никон креститься тремя перстами и книги старые перепечатать
+1654|Переяславская рада и воссоединение Левобережной Украины с Россией|Богдан Хмельницкий / Алексей Михайлович|Всенародная присяга Запорожского войска на верность русскому царю.|Боже, утверди, чтоб мы вовеки все едино были! Навеки с Москвой!
+1662|Медный бунт в Москве|Алексей Михайлович|Выступление москвичей в Коломенском против обесценивания медных денег.|Отменили медные деньги и вернули серебряную чеканку
+1667|Андрусовское перемирие и принятие Новоторгового устава|Афанасий Ордин-Нащокин|Возвращение России Смоленска, Северской земли и Киева, защита русских купцов.|Киев и Смоленск закрепляются за державой Российской
+1670|Восстание под предводительством Степана Разина|Степан Разин|Поход казаков на Волгу, взятие Астрахани, Царицына, Саратова и Самары.|Я пришел дать вам волю от бояр и воевод!
+1682|Отмена местничества при царе Федоре Алексеевиче|Федор Алексеевич / Василий Голицын|Торжественное сожжение разрядных книг местничества и переход к службе по способностям.|Да погибнет в огне вражда родовая, и да служат отечеству без мест!
+1686|«Вечный мир» с Речью Посполитой|Софья Алексеевна / Василий Голицын|Окончательное международное признание Киева за Россией и вступление в Священную лигу.|Вечный мир закреплен королевской печатью
+1687|Открытие Славяно-греко-латинской академии в Москве|Братья Лихуды|Основание первого высшего учебного заведения в Русском государстве.|Учредили в Москве Академию наук словесных и философских
+`;
+
+    const RU_E4_RAW = `
+1696|Взятие крепости Азов и рождение регулярного флота России|Петр I Великий / Франц Лефорт|Успешный второй Азовский поход Петра I при поддержке кораблей, построенных в Воронеже.|Морским судам быть!
+1697|Великое посольство Петра I в Западную Европу|Петр I Великий|Дипломатическая и научно-техническая миссия царя в Голландии и Англии.|Я в чине учащегося и требующего себе учителей
+1700|Начало Великой Северной войны и битва под Нарвой|Петр I Великий|Выступление России против Швеции за возвращение выхода к Балтийскому морю.|Нарва была первой школой для молодой русской армии
+1703|Основание Санкт-Петербурга|Петр I Великий|Закладка Петропавловской крепости на Заячьем острове в устье Невы.|Природой здесь нам суждено в Европу прорубить окно!
+1708|Битва при деревне Лесной и губернская реформа|Петр I / Александр Меншиков|Разгром корпуса шведского генерала Левенгаупта и разделение страны на 8 губерний.|Сия у нас победа может первая назваться, понеже над регулярным войском никогда такой не бывало
+1709|Полтавская битва|Петр I Великий|Сокрушительный разгром главной шведской армии короля Карла XII под Полтавой.|Воины! Вот пришел час, который решит судьбу Отечества. А о Петре ведайте, что ему жизнь его не дорога, только бы жила Россия!
+1711|Учреждение Правительствующего Сената и Прутский поход|Петр I Великий|Создание высшего государственного органа Российской империи.|Господам Сенату иметь радение о правосудии и казне государства
+1714|Гангутское морское сражение и Указ о единонаследии|Петр I / Федор Апраксин|Первая в истории России крупная морская победа русского флота над шведской эскадрой.|Победа при Гангуте равна Полтавской виктории!
+1718|Учреждение государственных коллегий и подушной подати|Петр I Великий|Замена старых приказов стройной системой коллегий.|Всякой коллегии иметь свой регламент и дело ведать коллегиально
+1720|Морская победа при Гренгаме и издание Морского устава|Михаил Голицын / Петр I|Разгром шведских фрегатов в Аландских шхерах.|Русский флот стал полным хозяином Балтийского моря
+1721|Ништадтский мир и провозглашение Российской Империи|Петр I Великий|Присоединение Лифляндии, Эстляндии, Ингерманландии и принятие титула Императора Всероссийского.|Мы из тьмы небытия в бытие произведены и в общество политичных народов присовокуплены!
+1722|Принятие «Табели о рангах» и Персидский поход Петра I|Петр I Великий|Установление 14 классов военной и гражданской службы с правом выслуги дворянства.|Дабы знатность рода без службы никому ни в какой ранг не вменялась
+1725|Открытие Петербургской Академии наук и экспедиция Беринга|Екатерина I / Витус Беринг|Начало работы Российской Академии наук по уставу Петра Великого.|Во славу наук и просвещения Российского государства
+1730|Попытка «верховников» ограничить самодержавие Кондициями|Анна Иоанновна|Разрыв императрицей Анной Иоанновной «Кондиций» Верховного тайного совета.|Разорвала государыня Кондиции при всем дворянстве
+1741|Воцарение Елизаветы Петровны в ходе дворцового переворота|Елизавета Петровна|Возвращение к заветам Петра I при поддержке гренадерской роты Преображенского полка.|Правительствовать по уставам родителя нашего Петра Великого
+1755|Основание Московского университета|Михаил Ломоносов / Иван Шувалов|Указ Елизаветы Петровны об учреждении первого российского университета.|Может собственных Платонов и быстрых разумом Невтонов Российская земля рождать!
+1759|Кунерсдорфское сражение в Семилетней войне|Петр Салтыков|Разгром армии Фридриха II Великого русско-австрийскими войсками.|Шляпа Фридриха Великого хранится как трофей русского оружия
+1762|Манифест о вольности дворянства и воцарение Екатерины II|Екатерина II Великая|Начало эпохи «просвещенного абсолютизма» и освобождение дворян от обязательной службы.|Вольность и свобода всему российскому благородному дворянству
+1767|Созыв Уложенной комиссии и «Наказ» Екатерины II|Екатерина II Великая|Собрание депутатов сословий в Грановитой палате для кодификации законов.|Законы должны соответствовать духу и благу народа
+1770|Победы при Ларге, Кагуле и в Чесменском морском сражении|Петр Румянцев / Григорий Спиридов|Сокрушение турецкой армии Румянцевым и сожжение османского флота в Чесме.|Не числом, а умением!
+1773|Восстание под предводительством Емельяна Пугачева|Емельян Пугачев / Александр Суворов|Крупнейшее выступление яицких казаков, крестьян и работных людей Урала и Поволжья.|Бог избави нас от русского бунта, бессмысленного и беспощадного
+1774|Кючук-Кайнарджийский мирный договор с Османской империей|Екатерина II / Петр Румянцев|Присоединение земель между Днепром и Южным Бугом, выход России в Черное море.|Черное море открыто для российских военных и торговых флагов
+1775|Губернская реформа Екатерины II и ликвидация Запорожской Сечи|Екатерина II Великая|Разделение империи на 50 губерний по численности населения.|Учреждения для управления губерний Всероссийской империи
+1783|Присоединение Крыма к России и Георгиевский трактат|Екатерина II / Григорий Потемкин|Вхождение Крыма, Тамани и Кубани в состав России и переход Восточной Грузии под защиту РФ.|Счастливая Таврида вошла под державную защиту России
+1785|Жалованные грамоты дворянству и городам|Екатерина II Великая|Окончательное оформление сословных прав и привилегий благородного дворянства и горожан.|Золотой век российского дворянства
+1790|Штурм неприступной крепости Измаил|Александр Суворов|Взятие турецкой твердыни Измаил на Дунае войсками А. В. Суворова.|На Измаил можно отважиться только раз в жизни! Гордый Измаил пал к стопам Вашего Величества!
+1799|Итальянский и Швейцарский походы А. В. Суворова|Александр Суворов / Федор Ушаков|Героический переход через Альпы (Сен-Готард и Чертов мост) и звание Генералиссимуса.|Где пройдет олень — там пройдет и русский солдат! Где не пройдет олень — все равно пройдет русский солдат!
+1802|Учреждение министерств в России|Александр I|Масштабная реформа государственного управления и замена петровских коллегий министерствами.|Дней Александровых прекрасное начало
+1807|Тильзитский мир между Россией и Францией|Александр I / Наполеон Бонапарт|Переговоры двух императоров на плоту посреди реки Неман.|Встреча императоров на плоту посреди Немана
+1810|Учреждение Государственного совета Российской империи|Александр I / Михаил Сперанский|Создание высшего законосовещательного органа по проекту М. М. Сперанского.|Утверждение начал законности в государственном управлении
+1812|Отечественная война и Бородинское сражение|Михаил Кутузов / Петр Багратион|Генеральное сражение у села Бородино, Тарутинский маневр и изгнание Великой армии Наполеона.|С потерей Москвы еще не потеряна Россия! Война окончилась за полным истреблением неприятеля!
+1814|Взятие Парижа русскими и союзными войсками|Александр I / Михаил Барклай-де-Толли|Торжественное вступление русской армии в столицу Франции и низложение Наполеона.|Русские казачьи биваки на Елисейских полях Парижа
+1820|Открытие шестого континента — Антарктиды русской экспедицией|Фаддей Беллинсгаузен и Михаил Лазарев|Кругосветное плавание шлюпов «Восток» и «Мирный» к Южному полюсу.|Русские моряки открыли ледяной материк на краю света
+1825|Восстание декабристов на Сенатской площади|Николай I / Павел Пестель и Кондратий Рылеев|Выступление гвардейских офицеров тайных обществ с требованием Конституции.|Из искры возгорится пламя!
+1828|Туркманчайский мирный договор с Персией|Иван Паскевич / Александр Грибоедов|Присоединение Восточной Армении (Эривани и Нахичевани) к Российской империи.|Утверждение России в Закавказье
+1832|Издание Полного собрания и Свода законов Российской империи|Михаил Сперанский / Николай I|Кодификация всего российского законодательства со времен Соборного уложения.|Титанический труд Сперанского дал России стройный Свод законов
+1837|Открытие первой железной дороги Петербург — Царское Село|Николай I / Франц Герстнер|Начало железнодорожного строительства в Российской империи.|Паровоз «Проворный» открыл эру стальных магистралей России
+1853|Синопское морское сражение и начало Крымской войны|Павел Нахимов / Владимир Корнилов|Уничтожение турецкого флота эскадрой Нахимова в Синопской бухте.|Отстаивайте же Севастополь!
+1858|Айгунский договор с Китаем и присоединение Приамурья|Николай Муравьев-Амурский / Геннадий Невельской|Мирное закрепление за Россией левого берега Амура на Дальнем Востоке.|Амур — река русская!
+1861|Отмена крепостного права в России|Александр II Освободитель|Манифест об освобождении 23 миллионов помещичьих крестьян с предоставлением личных прав.|Осени себя крестным знамением, православный народ, и призови Божие благословение на твой свободный труд!
+1864|Земская и Судебная реформы Александра II|Александр II Освободитель|Введение всесословных выборных земств и гласного, состязательного суда присяжных.|Правда и милость да царствуют в судах!
+1874|Военная реформа и введение всеобщей воинской повинности|Дмитрий Милютин / Александр II|Отмена рекрутских наборов и создание современной массовой армии.|Защита престола и Отечества есть священная обязанность каждого русского подданного
+1877|Русско-турецкая война за освобождение Болгарии|Михаил Скобелев / Иосиф Гурко|Героическая оборона Шипки, взятие Плевны и Сан-Стефанский мир.|На Шипке всё спокойно! Белый генерал Скобелев ведет полки к победе
+1881|Гибель Александра II и воцарение Александра III Миротворца|Александр III Миротворец|Переход к курсу консервативной стабилизации и укрепления Российской империи.|Во всем свете у нас только два верных союзника — наша армия и наш флот!
+`;
+
+    const RU_E5_RAW = `
+1897|Денежная реформа С. Ю. Витте и первая всеобщая перепись населения|Сергей Витте / Николай II|Введение золотого стандарта рубля и первая всеобщая перепись Российской империи.|Российский золотой рубль стал одной из самых твердых валют мира
+1904|Начало Русско-японской войны и подвиг крейсера «Варяг»|Всеволод Руднев / Степан Макаров|Героический бой крейсера «Варяг» и канонерской лодки «Кореец» у Чемульпо.|Не скажут ни камень, ни крест, где легли во славу мы русского флага!
+1905|Первая русская революция и Манифест об учреждении Государственной думы|Николай II / Сергей Витте|Дарование гражданских свобод и создание законодательной Государственной думы.|Даровать населению незыблемые основы гражданской свободы
+1906|Начало аграрной реформы П. А. Столыпина|Петр Столыпин|Разрешение свободного выхода крестьян из общины на хутора и отруба, переселение в Сибирь.|Им нужны великие потрясения — нам нужна Великая Россия!
+1914|Вступление России в Первую мировую войну и Галицийская битва|Николай II / Николай Рузский|Разгром австро-венгерских армий в Галиции и спасение союзников по Антанте.|В единении с народом — залог победы России
+1916|Брусиловский прорыв Юго-Западного фронта|Алексей Брусилов|Крупнейшая наступательная операция Первой мировой войны, сокрушившая австро-германскую оборону.|Брусиловский прорыв открыл новую эру военного искусства
+1917|Февральская революция и отречение императора Николая II|Николай II / Михаил Родзянко|Падение монархии в России и установление двоевластия Временного правительства и Советов.|Кругом измена и трусость и обман
+1917|Октябрьская революция и II Всероссийский съезд Советов|Владимир Ленин / Лев Троцкий|Свержение Временного правительства в Петрограде и принятие Декретов о мире и о земле.|Революция, о необходимости которой все время говорили большевики, свершилась!
+1918|Подписание Брестского мира и перенос столицы в Москву|Владимир Ленин / Яков Свердлов|Выход Советской России из Первой мировой войны и принятие первой Конституции РСФСР.|Социалистическое Отечество в опасности!
+1920|Разгром армии Врангеля в Крыму и принятие плана ГОЭЛРО|Михаил Фрунзе / Глеб Кржижановский|Штурм Перекопа и принятие государственного плана электрификации России.|Коммунизм — это есть Советская власть плюс электрификация всей страны!
+1921|Переход от «военного коммунизма» к Новой экономической политике (НЭП)|Владимир Ленин|Замена продразверстки продналогом на X съезде РКП(б), введение золотого червонца.|НЭП мы вводим всерьез и надолго
+1922|Образование Союза Советских Социалистических Республик (СССР)|Владимир Ленин / Иосиф Сталин|Объединение РСФСР, УССР, БССР и ЗСФСР в единое союзное государство.|Да здравствует Союз Советских Социалистических Республик!
+1928|Начало первой пятилетки и форсированной индустриализации СССР|Иосиф Сталин / Серго Орджоникидзе|Строительство ДнепроГЭСа, Магнитогорского и Кузнецкого комбинатов, Турксиба и автозаводов.|Мы отстали от передовых стран на 50–100 лет. Мы должны пробежать это расстояние в десять лет!
+1934|Спасение экспедиции «Челюскина» и учреждение звания Героя СССР|Отто Шмидт / Анатолий Ляпидевский|Эвакуация полярников со льдины советскими летчиками — первыми Героями СССР.|Героям Арктики — всенародная слава!
+1935|Стахановское движение и открытие Московского метрополитена|Алексей Стаханов / Лазарь Каганович|Рекорд забойщика Алексея Стаханова и запуск поездов первой линии метро.|Кадры решают всё!
+1937|Трансполярный перелет экипажа В. П. Чкалова из Москвы в США|Валерий Чкалов / Георгий Байдуков|Беспосадочный перелет на самолете АНТ-25 через Северный полюс в Ванкувер.|Будем летать выше всех, дальше всех и быстрее всех!
+1939|Разгром японских войск на реке Халхин-Гол|Георгий Жуков|Окружение и уничтожение шестой японской армии войсками комкора Г. К. Жукова в Монголии.|Танковый удар Жукова у Халхин-Гола отбил у Токио охоту идти на север
+1941|Начало Великой Отечественной войны и оборона Брестской крепости|Петр Гаврилов / Вячеслав Молотов|Героическое сопротивление пограничников и развертывание Красной Армии.|Наше дело правое. Враг будет разбит. Победа будет за нами!
+1941|Контрнаступление Красной Армии в Битве за Москву|Георгий Жуков / Василий Клочков|Подвиг панфиловцев и сокрушительный крах плана «Барбаросса» у стен Москвы.|Велика Россия, а отступать некуда — позади Москва!
+1942|Начало контрнаступления под Сталинградом (операция «Уран»)|Георгий Жуков / Александр Василевский и Василий Чуйков|Оборона дома Павлова, Мамаева кургана и окружение армии Паулюса.|За Волгой для нас земли нет!
+1943|Курская битва и танковое сражение под Прохоровкой|Константин Рокоссовский / Николай Ватутин|Срыв операции «Цитадель», первые салюты в честь освобождения Орла и Белгорода и битва за Днепр.|Если немцы под Москвой потерпели поражение, то после Курска они идут к катастрофе!
+1944|Полное снятие блокады Ленинграда и операция «Багратион»|Леонид Говоров / Константин Рокоссовский|Окончание блокады Ленинграда и сокрушение группы армий «Центр» в Белоруссии.|Никто не забыт и ничто не забыто!
+1945|Взятие Берлина и День Победы в Великой Отечественной войне|Иосиф Сталин / Георгий Жуков и Константин Рокоссовский|Водружение Егоровым и Кантарией Знамени Победы над Рейхстагом и капитуляция Германии.|Внимание, говорит Москва! Праздник Победы!
+1949|Испытание первой советской атомной бомбы РДС-1|Игорь Курчатов / Юлий Харитон|Ликвидация ядерной монополии США на Семипалатинском полигоне.|Мы создали советский атомный щит, чтобы никогда больше не было войны
+1954|Пуск первой в мире Обнинской АЭС и начало освоения целины|Игорь Курчатов / Никита Хрущев|Открытие эры мирной атомной энергетики и распашка целинных земель Казахстана и Сибири.|Атом должен быть рабочим, а не солдатом!
+1957|Запуск первого в мире искусственного спутника Земли в СССР|Сергей Королев|Вывод «Спутника-1» на орбиту ракетой Р-7 и начало космической эры человечества.|Позывные советского спутника «бип-бип» услышала вся планета!
+1961|Первый в истории полет человека в космос|Юрий Гагарин / Сергей Королев|Орбитальный полет Юрия Алексеевича Гагарина на корабле «Восток-1».|Поехали! Облетев Землю в корабле-спутнике, я увидел, как прекрасна наша планета!
+1965|Первый выход человека в открытый космос и реформа А. Н. Косыгина|Алексей Леонов / Алексей Косыгин|Выход космонавта Алексея Леонова в открытый космос с корабля «Восход-2».|Человек шагнул в открытую бездну космоса
+1975|Хельсинкский акт по безопасности в Европе и полет «Союз — Аполлон»|Леонид Брежнев / Алексей Леонов|Достижение стратегического паритета и стыковка советского и американского кораблей.|Рукопожатие в космосе над Эльбой
+1980|Летние Олимпийские игры в Москве|Леонид Брежнев|Проведение первой в истории Олимпиады в Восточной Европе.|На трибунах становится тише, до свиданья, наш ласковый Миша!
+1985|Начало Перестройки и политики гласности в СССР|Михаил Горбачев|Курс на ускорение, демократизацию и разрядку международной напряженности.|Процесс пошел!
+1991|Распад СССР и образование Содружества Независимых Государств|Борис Ельцин / Михаил Горбачев|Беловежские соглашения и спуск государственного флага СССР над Кремлем.|Берегите Россию!
+1993|Принятие Конституции Российской Федерации на всенародном голосовании|Борис Ельцин|Утверждение действующей Конституции РФ и формирование Федерального Собрания.|Мы, многонациональный народ Российской Федерации, соединенные общей судьбой на своей земле...
+`;
+
+    // ==========================================
+    // БАЗА ВСЕОБЩЕЙ ИСТОРИИ / МИРА
+    // ==========================================
+    const WORLD_E1_RAW = `
+-3100|Объединение Верхнего и Нижнего Египта в единое царство|Фараон Менес (Нармер)|Создание древнейшего централизованного государства в долине Нила и основание Мемфиса.|Владыка двух земель и двух корон Египта
+-2560|Завершение строительства Великой пирамиды Хеопса в Гизе|Фараон Хеопс (Хуфу) / Хемиун|Возведение единственного сохранившегося из семи чудес света древнего мира.|Все в мире боится времени, но время боится пирамид!
+-1750|Составление свода законов царя Хаммурапи в Вавилоне|Царь Хаммурапи|Древнейший высеченный на черном базальтовом столбе кодекс законов Месопотамии.|Чтобы сильный не притеснял слабого! Око за око, зуб за зуб!
+-1457|Битва при Мегиддо и расцвет Нового царства в Египте|Тутмос III|Крупнейшие завоевательные походы египетской армии в Сирию и Палестину.|Фараон впереди войска своего на золотой колеснице
+-1274|Битва при Кадеше и первый письменный мирный договор в истории|Рамсес II Великий / Хаттусили III|Грандиозное сражение тысяч колесниц египтян и хеттов и заключение «вечного мира».|Да будет прекрасный мир и братство между Египтом и Хатти навеки!
+-1200|Троянская война и падение Илиона (Трои)|Агамемнон / Ахилл и Одиссей|Десятилетняя осада ахейскими греками Трои, воспетая Гомером в «Илиаде».|Бойтесь данайцев, дары приносящих!
+-776|Проведение первых Олимпийских игр в Древней Греции|Ифит Элидский|Начало общегреческих атлетических состязаний в Олимпии и летосчисления по олимпиадам.|На время игр объявляется священный мир по всей Элладе!
+-753|Основание города Рима на Палатинском холме|Ромул и Рем|Основание Вечного города на берегах Тибра и учреждение римского Сената.|Да не переступит никто через стены моего города безнаказанно!
+-612|Падение Ниневии и крушение Ассирийской державы|Набопаласар / Киаксар|Разгром столицы Ассирии войсками Нововавилонского царства и Мидии.|Пал город крови, логовище львов ассирийских
+-594|Реформы архонта Солона в Афинах|Солон Афинский|Отмена долгового рабства (сисахфия) и заложение основ афинской демократии.|Я снял долговые камни с черной матери-земли и вернул проданных на чужбину!
+-550|Образование Персидской мировой империи Ахеменидов|Кир II Великий|Объединение стран Ближнего и Среднего Востока под властью Кира Великого.|Я — Кир, царь мира, царь великий, царь четырех стран света!
+-509|Изгнание царей и установление Римской республики|Луций Юний Брут|Свержение Тарквиния Гордого и учреждение ежегодно избираемых консулов.|Сенат и свободный народ Рима (SPQR)
+-490|Марафонская битва в греко-персидских войнах|Стратег Мильтиад|Разгром персидского десанта Дария I афинскими гоплитами на Марафонской равнине.|Радуйтесь, афиняне, мы победили!
+-480|Подвиг 300 спартанцев при Фермопилах и морская битва при Саламине|Царь Леонид / Фемистокл|Героическая оборона Фермопильского прохода и уничтожение флота Ксеркса в Саламинском проливе.|Путник, пойди возвести нашим гражданам в Лакедемоне, что их заветы блюдя, здесь мы костьми полегли!
+-443|«Золотой век» Перикла в Афинах и строительство Парфенона|Перикл / Фидий|Вершина расцвета афинской демократии, театра и архитектуры Акрополя.|Мы любим красоту без прихотливости и мудрость без изнеженности; Афины — школа всей Эллады!
+-431|Начало Пелопоннесской войны между Афинами и Спартой|Перикл / Лисандр и Фукидид|Борьба Афинского морского союза и Пелопоннесского союза за гегемонию в Элладе.|Война, потрясшая весь эллинский мир до основания
+-338|Битва при Херонее и объединение Греции под властью Македонии|Филипп II Македонский|Триумф македонской фаланги и конницы юного Александра над полисами Греции.|Сын мой, ищи себе другое царство, ибо Македония для тебя слишком мала!
+-331|Битва при Гавгамелах и создание державы Александра Македонского|Александр Македонский|Решающий разгром огромной армии персидского царя Дария III и поход до берегов Инда.|Я не краду победу по ночам! Для смелого нет ничего невозможного!
+-264|Начало Пунических войн между Римом и Карфагеном|Марк Порций Катон / Гамилькар Барка|Вековая борьба двух сверхдержав античности за господство в Средиземном море.|Кроме того, я считаю, что Карфаген должен быть разрушен!
+-221|Объединение Китая под властью империи Цинь и Великая Китайская стена|Цинь Шихуанди|Создание единой централизованной империи, единой письменности, монеты и «терракотовой армии».|Первый полновластный император Поднебесной
+-216|Битва при Каннах во Второй Пунической войне|Ганнибал Барка|Непревзойденный образец полного двойного окружения и разгрома римской армии.|Мы либо найдем путь через Альпы, либо проложим его сами!
+-202|Битва при Заме и победа Рима над Ганнибалом|Сципион Африканский|Поражение Ганнибала в Северной Африке и превращение Рима в сильнейшую державу Запада.|Рим выстоял после Канн и сокрушил Карфаген
+-146|Разрушение Карфагена и Коринфа римскими легионами|Сципион Эмилиан|Полное уничтожение Карфагена и подчинение Греции власти Римской республики.|Землю Карфагена распахали плугом и посыпали солью
+-73|Восстание гладиаторов и рабов под предводительством Спартака|Спартак / Марк Лициний Красс|Крупнейшее восстание рабов древности, разгромившее несколько консульских армий Рима.|Лучше умереть за свободу с мечом в руках, чем погибнуть на потеху толпе в цирке!
+-49|Переход Юлия Цезаря через Рубикон и установление диктатуры|Гай Юлий Цезарь|Победа Цезаря при Фарсале, реформа календаря и пожизненная диктатура.|Жребий брошен! Пришел, увидел, победил!
+-44|Убийство Юлия Цезаря в римском Сенате в мартовские иды|Гай Юлий Цезарь / Марк Юний Брут|Заговор сенаторов-республиканцев и начало последней гражданской войны республики.|И ты, Брут?!
+-31|Морская битва при мысе Акций и рождение Римской империи|Октавиан Август|Разгром флота Марка Антония и Клеопатры и установление принципата Августа.|Я принял Рим кирпичным, а оставляю его мраморным!
+9|Битва в Тевтобургском лесу|Арминий / Квинтилий Вар|Уничтожение трех легионов Квинтилия Вара германскими племенами и остановка экспансии Рима за Рейн.|Квинтилий Вар, верни мне мои легионы!
+79|Извержение Везувия и гибель античных городов Помпеи и Геркуланум|Плиний Старший / Император Тит|Катастрофическое извержение вулкана, законсервировавшее римский город под пеплом.|Я предпочел бы, чтобы со мной погибла моя наука, нежели оставить в беде людей
+117|Наивысший территориальный расцвет Римской империи при Траяне|Марк Ульпий Траян|Покорение Дакии и Месопотамии; границы Рима простерлись от Шотландии до Персидского залива.|Будь счастливее Августа и лучше Траяна!
+313|Миланский эдикт о свободе вероисповедания христиан|Константин I Великий|Прекращение гонений на христиан и легализация христианской церкви в Римской империи.|Сим знаком победишь!
+395|Окончательный раздел Римской империи на Западную и Восточную|Феодосий I Великий|Разделение империи между сыновьями со столицами в Риме и Константинополе.|Две столицы — Рим и Константинополь
+451|Битва на Каталаунских полях («Битва народов» древности)|Флавий Аэций / Аттила|Кровопролитное сражение римлян и вестготов против гуннской державы вождя Аттилы.|Остановлено нашествие гуннов на Галлию
+476|Падение Западной Римской империи и конец эпохи Древнего мира|Ромул Августул / Одоакр|Низложение последнего императора Запада Ромула Августула германским вождем Одоакром.|Падение Вечного Города и рождение средневековой Европы
+`;
+
+    const WORLD_E2_RAW = `
+527|Правление императора Юстиниана I и кодификация римского права|Юстиниан I Великий / Велизарий|Создание «Свода гражданского права» и постройка собора Святой Софии в Константинополе.|Соломон, я превзошел тебя!
+622|Хиджра пророка Мухаммеда из Мекки в Медину и рождение Арабского халифата|Пророк Мухаммед|Начало мусульманского лунного календаря и объединение Аравии под знаменем ислама.|Стремитесь к знаниям от колыбели до могилы
+732|Битва при Пуатье во Франции|Карл Мартелл («Молот»)|Победа тяжелой конницы франков над армией Арабского халифата в Западной Европе.|Франкская стена щитов выстояла при Пуатье
+800|Коронация Карла Великого императорской короной в Риме|Карл Великий|Создание Франкской империи и «Каролингское возрождение» в Западной Европе.|Карл Август, коронованный Богом великий император Римлян
+843|Верденский раздел империи Карла Великого|Лотарь, Людовик Немецкий и Карл Лысый|Разделение Франкской державы на три королевства — прообразы Франции, Германии и Италии.|Из одной короны выросли три державы Европы
+962|Образование Священной Римской империи|Оттон I Великий|Коронация германского короля Оттона I императорской короной в Риме.|Империя от Северного моря до центральной Италии
+1054|Великая схизма — разделение церкви на Католическую и Православную|Папа Лев IX / Патриарх Михаил Керулларий|Окончательный церковный раскол между Римом и Константинополем.|Разделение западно-латинского и восточно-православного мира
+1066|Битва при Гастингсе и нормандское завоевание Англии|Вильгельм I Завоеватель|Разгром англосаксов короля Гарольда II и составление «Книги Страшного суда».|Я держу эту английскую землю обеими руками!
+1077|«Хождение в Каноссу» императора Генриха IV|Генрих IV / Папа Григорий VII|Острейший конфликт светской и папской власти за инвеституру в Европе.|Мы не пойдем в Каноссу!
+1095|Клермонский собор и начало Первого крестового похода|Папа Урбан II / Готфрид Бульонский|Взятие Иерусалима рыцарями-крестоносцами и образование Иерусалимского королевства.|Так хочет Бог! Не надену золотой венец там, где Спаситель носил терновый!
+1187|Битва при Хаттине и возвращение Иерусалима султаном Саладином|Салах ад-Дин (Саладин)|Сокрушение армии крестоносцев султаном Египта и Сирии Саладином.|Истинное величие правителя — в милосердии к побежденным
+1189|Третий крестовый поход «трех монархов»|Ричард I Львиное Сердце / Фридрих I Барбаросса|Поход английского, французского и германского монархов в Святую землю.|Я бы продал и Лондон, если бы нашелся покупатель ради похода в Иерусалим!
+1204|Разгром Константинополя рыцарями Четвертого крестового похода|Энрико Дандоло|Захват и разграбление православной столицы Византии крестоносцами и создание Латинской империи.|Крестоносцы повернули мечи против христианского Царьграда
+1206|Всемонгольский курултай на Ононе и провозглашение державы Чингисхана|Чингисхан (Тэмуджин)|Объединение кочевых народов Великой степи и принятие законов «Великой Ясы».|Бойся того, кто действует, пока ты только собираешься!
+1215|Подписание «Великой хартии вольностей» (Magna Carta) в Англии|Король Иоанн Безземельный|Ограничение королевского произвола и закрепление неприкосновенности свободных людей без суда.|Ни один свободный человек не будет арестован иначе как по законному приговору равных
+1265|Созыв первого сословного Парламента в Англии|Симон де Монфор / Эдуард I|Участие рыцарей от графств и горожан наряду с лордами и епископами в Вестминстере.|То, что касается всех, должно быть одобрено всеми!
+1271|Экспедиция венецианца Марко Поло в империю Юань|Марко Поло / Хубилай-хан|Четвертьвековое путешествие по Азии и создание «Книги о разнообразии мира».|Я не рассказал и половины того, что видел собственными глазами!
+1291|Падение Акры — последней крепости крестоносцев на Ближнем Востоке|Бейбарс / Калаун|Окончание двухвековой эпохи крестовых походов в Палестину.|Ушли последние корабли рыцарских орденов из Святой земли
+1302|Созыв первых Генеральных штатов во Франции|Филипп IV Красивый|Превращение Франции в сословно-представительную монархию и Авиньонское пленение пап.|Король Франции не признает над собой никого на земле!
+1337|Начало Столетней войны между Англией и Францией|Эдуард III / Филипп VI Валуа|Крупнейший военно-политический конфликт западноевропейского Средневековья.|Сто шестнадцать лет борьбы за французскую корону
+1346|Битва при Креси и пандемия «Черной смерти» в Европе|Эдуард Черный Принц|Победа английских стрелков с длинными луками над французской рыцарской конницей.|Пусть принц сам в бою заслужит свои золотые шпоры!
+1356|Принятие «Золотой буллы» императора Карла IV в Священной Римской империи|Карл IV Люксембург|Закрепление избрания германского императора коллегией семи курфюрстов.|Основной закон империи на четыре с половиной столетия
+1368|Восстание «Красных повязок» и основание национальной империи Мин в Китае|Чжу Юаньчжан (Хунъу)|Свержение монгольской династии Юань и возрождение китайской государственности.|Изгнание северных завоевателей и возрождение Поднебесной
+1381|Крестьянское восстание Уота Тайлера в Англии|Уот Тайлер / Джон Болл|Массовый поход крестьян на Лондон, ускоривший ликвидацию личной крепостной зависимости в Англии.|Когда Адам пахал, а Ева пряла — кто тогда был дворянином?!
+1389|Битва на Косовом поле|Князь Лазарь Хребелянович / Милош Обилич|Героическое сражение сербского войска против армии османского султана Мурада I.|Лучше достойная смерть в битве, чем жизнь в бесчестии!
+1410|Грюнвальдская битва|Владислав II Ягайло / Великий князь Витовт|Сокрушительный разгром Тевтонского ордена союзной польско-литовско-русской армией при стойкости смоленских полков.|Сломлен хребет Тевтонского ордена на полях Грюнвальда
+1415|Битва при Азенкуре и начало Гуситских войн в Чехии|Генрих V / Ян Гус и Ян Жижка|Подвиг реформатора Яна Гуса на соборе в Констанце и непобедимые «вагенбурги» полководца Яна Жижки.|Ищите правду, слушайте правду, учитесь правде, защищайте правду до самой смерти!
+1429|Освобождение Орлеана войсками Жанны д'Арк и перелом в Столетней войне|Жанна д'Арк (Орлеанская дева)|Снятие английской осады с Орлеана и коронация короля Карла VII в Реймсе.|Храбрые французы, вперед! Кто любит меня — за мной!
+1440|Изобретение европейского книгопечатания с подвижными литерами|Иоганн Гутенберг|Создание печатного пресса в Майнце и издание 42-строчной Библии Гутенберга.|Двадцать шесть свинцовых солдатиков Гутенберга покорили весь мир
+1453|Падение Константинополя и окончание Столетней войны|Мехмед II Завоеватель / Константин XI Палеолог|Взятие столицы Византии османами и изгнание англичан из Франции.|Император пал с мечом в руках у ворот Святого Романа
+1455|Начало Войны Алой и Белой розы в Англии|Генрих VII Тюдор / Ричард III|Династическая борьба домов Ланкастеров и Йорков, завершившаяся воцарением Тюдоров.|Коня, коня! Полцарства за коня!
+1479|Объединение Кастилии и Арагона в единое Испанское королевство|Фердинанд Арагонский и Изабелла Кастильская|Создание единой Испании и завершение Реконкисты на Пиренейском полуострове.|Столько же стоит Изабелла, сколько и Фердинанд
+`;
+
+    const WORLD_E3_RAW = `
+1492|Открытие Америки экспедицией Христофора Колумба|Христофор Колумб|Первое пересечение Атлантического океана каравеллами «Санта-Мария», «Пинта» и «Нинья».|Земля! Земля! Я вижу огни на берегу!
+1494|Тордесильясский договор о разделе сфер влияния между Испанией и Португалией|Папа Александр VI|Проведение демаркационного меридиана в Атлантическом океане между двумя морскими державами.|Океан разделен между коронами Мадрида и Лиссабона
+1498|Открытие морского пути в Индию вокруг Африки экспедицией Васко да Гамы|Васко да Гама|Прибытие португальской эскадры в индийский порт Каликут через Индийский океан.|Мы приплыли сюда искать христиан и пряности!
+1517|Выступление Мартина Лютера с «95 тезисами» и начало Реформации|Мартин Лютер|Прикрепление тезисов против индульгенций к дверям церкви в Виттенберге и перевод Библии на немецкий.|На том стою и не могу иначе! Да поможет мне Бог!
+1519|Начало первого кругосветного плавания экспедиции Фернана Магеллана|Фернан Магеллан / Хуан Себастьян Элькано|Открытие Магелланова пролива, пересечение Тихого океана и доказательство шарообразности Земли.|Ты первым обогнул меня!
+1521|Завоевание империи ацтеков Эрнандо Кортесом|Эрнан Кортес / Монтесума II|Падение столицы ацтеков Теночтитлана и создание Испанской колониальной империи в Америке.|Мы сожгли свои корабли, чтобы у нас остался только путь вперед!
+1526|Битва при Панипате и основание империи Великих Моголов в Индии|Захиреддин Бабур / Акбар Великий|Создание могущественной державы Великих Моголов и последующее возведение Тадж-Махала.|От гор Кабула до равнин Ганга
+1534|«Акт о супрематии» в Англии и начало королевской Реформации|Генрих VIII Тюдор|Отделение Англиканской церкви от Рима и провозглашение короля верховным главой церкви.|Король Англии — единственный верховный глава Церкви на земле
+1543|Книга Николая Коперника «О вращении небесных сфер»|Николай Коперник|Создание гелиоцентрической системы мира (Земля и планеты вращаются вокруг Солнца).|Остановивший Солнце и сдвинувший Землю!
+1555|Аугсбургский религиозный мир в Священной Римской империи|Император Карл V Габсбург|Официальное признание лютеранства наравне с католицизмом в германских княжествах.|Чья страна — того и вера!
+1571|Морская битва при Лепанто|Дон Хуан Австрийский|Крупнейшее гребное морское сражение, в котором флот Священной лиги сокрушил флот Османской империи.|В том бою потерял руку отважный солдат Мигель де Сервантес
+1572|Варфоломеевская ночь в Париже|Екатерина Медичи / Генрих Наваррский|Кровавая расправа над протестантами-гугенотами в разгар Религиозных войн во Франции.|Париж стоит мессы!
+1579|Утрехтская уния и рождение Республики Соединенных провинций (Голландии)|Вильгельм I Оранский|Первая победоносная буржуазная революция и освобождение Северных Нидерландов от власти Испании.|Спокоен среди бушующих волн!
+1588|Гибель испанской «Непобедимой армады» в Ла-Манше|Елизавета I Тюдор / Фрэнсис Дрейк|Разгром флота испанского короля Филиппа II и превращение Англии в морскую сверхдержаву.|У меня тело слабой женщины, но сердце и отвага короля Англии!
+1598|Нантский эдикт короля Генриха IV о веротерпимости во Франции|Генрих IV Бурбон|Прекращение Религиозных войн и предоставление гугенотам гражданских и религиозных прав.|Я хочу, чтобы у каждого крестьянина моего королевства по воскресеньям была курица в супе!
+1600|Основание английской Ост-Индской компании и казнь Джордано Бруно|Елизавета I / Джордано Бруно|Создание первых акционерных корпораций и мученическая гибель философа Джордано Бруно в Риме.|Вы с большим страхом произносите мне приговор, чем я выслушиваю его! Сжечь — не значит опровергнуть!
+1603|Установление сёгуната Токугава в Японии (эпоха Эдо)|Токугава Иэясу|Объединение Японии после междоусобных войн и введение политики самоизоляции «сакоку».|Жизнь человека подобна долгому пути с тяжелой ношей на плечах — не спеши!
+1618|Начало Тридцатилетней войны в Европе|Густав II Адольф / Альбрехт фон Валленштейн|Первый всеевропейский военный конфликт между габсбургским блоком и антигабсбургской коалицией.|Снежный король Севера изменил тактику европейских полей сражений
+1633|Суд инквизиции над Галилео Галилеем и защита гелиоцентризма|Галилео Галилей|Изобретение телескопа, открытие спутников Юпитера и законов динамики.|А все-таки она вертится!
+1640|Созыв Долгого парламента и начало Английской буржуазной революции|Оливер Кромвель|Создание армии «нового образца» («железнобоких») и победа над войсками короля Карла I.|Надейся на Бога, но порох держи сухим!
+1648|Вестфальский мирный договор и рождение современной дипломатии|Кардинал Мазарини / Аксель Оксеншерна|Окончание Тридцатилетней войны и утверждение принципа государственного суверенитета.|Вестфальский мир заложил фундамент международного права Европы
+1649|Казнь короля Карла I и провозглашение Английской республики|Оливер Кромвель|Установление республики и протектората Кромвеля, принятие Навигационного акта.|Лорд-протектор Англии, Шотландии и Ирландии
+1661|Начало самостоятельного правления Людовика XIV («Короля-Солнце»)|Людовик XIV де Бурбон / Жан-Батист Кольбер|Вершина европейского абсолютизма, меркантилизма и строительство Версаля.|Государство — это я!
+1683|Венская битва и снятие последней османской осады Вены|Ян III Собеский|Сокрушительная атака польско-австрийской конницы Яна Собеского, остановившая османов в Европе.|Пришел, увидел, Бог победил!
+1687|Публикация «Математических начал натуральной философии» Исаака Ньютона|Исаак Ньютон|Формулировка закона всемирного тяготения и трех законов классической механики.|Если я видел дальше других, то потому, что стоял на плечах гигантов!
+1688|«Славная революция» и утверждение парламентской монархии в Англии|Вильгельм III Оранский / Джон Локк|Принятие «Билля о правах» и ограничение королевской власти парламентом.|Король царствует, но не правит!
+1701|Начало Войны за испанское наследство и провозглашение Королевства Пруссия|Герцог Мальборо / Фридрих I|Борьба европейских держав за раздел владений испанских Габсбургов.|Пиренеев больше не существует!
+1751|Издание французской «Энциклопедии» и расцвет эпохи Просвещения|Дени Дидро, Вольтер и Шарль Монтескье|Идеи разделения властей, общественного договора и естественных прав человека.|Я не согласен ни с одним вашим словом, но готов умереть за ваше право их высказывать!
+1756|Начало Семилетней войны в Европе, Америке и Индии|Фридрих II Великий / Уильям Питт Старший|Масштабный конфликт коалиций, по итогам которого Британия овладела Канадой и Индией.|Первая глобальная война Нового времени на трех континентах
+1769|Патент Джеймса Уатта на паровую машину и промышленный переворот|Джеймс Уатт / Ричард Аркрайт|Переход от ручного мануфактурного труда к крупному машинному фабричному производству.|Паровая машина дала человечеству неутомимый двигатель прогресса
+1773|«Бостонское чаепитие» и начало конфликта американских колоний с Британией|Джордж Вашингтон / Бенджамин Франклин|Выступление американских колонистов против британских налогов и начало борьбы за независимость.|Никаких налогов без представительства! Дайте мне свободу или дайте мне смерть!
+1776|Принятие Декларации независимости США|Томас Джефферсон / Джон Адамс|Образование Соединенных Штатов Америки и провозглашение суверенитета народа.|Мы считаем очевидными истины, что все люди созданы равными!
+1787|Принятие Конституции США в Филадельфии|Джордж Вашингтон / Джеймс Мэдисон|Первая в мире писаная федеративная конституция с четким разделением трех ветвей власти.|Мы, народ Соединенных Штатов, в целях образования более совершенного Союза...
+`;
+
+    const WORLD_E4_RAW = `
+1789|Взятие Бастилии и начало Великой французской революции|Мирабо / Маркиз де Лафайет|Штурм Бастилии, отмена сословных привилегий и принятие «Декларации прав человека и гражданина».|Люди рождаются и остаются свободными и равными в правах!
+1792|Победа при Вальми и провозглашение Первой Французской республики|Жорж Дантон|Свержение короля Людовика XVI и отражение интервенции прусско-австрийской коалиции.|Что нам нужно, чтобы победить врагов? Смелость, еще раз смелость и всегда смелость!
+1793|Установление Якобинской диктатуры во Франции|Максимилиан Робеспьер / Луи Сен-Жюст|Всеобщая мобилизация, отмена феодальных повинностей и власть Комитета общественного спасения.|Революционное правительство есть деспотизм свободы против тирании!
+1799|Переворот 18 брюмера и установление режима Консульства во Франции|Наполеон Бонапарт|Окончание Французской революции и приход генерала Бонапарта к власти в качестве Первого консула.|Граждане, революция вернулась к принципам, с которых она началась: она окончена!
+1804|Провозглашение Французской империи и Гражданский кодекс Наполеона|Наполеон Бонапарт|Коронация Наполеона I и введение классического буржуазного кодекса гражданского права.|Моя истинная слава не в том, что я выиграл 40 сражений: вечно будет жить мой Гражданский кодекс!
+1805|Трафальгарское морское сражение и триумф Наполеона под Аустерлицем|Адмирал Горацио Нельсон / Наполеон Бонапарт|Разгром франко-испанского флота у мыса Трафальгар и победа Наполеона в «Битве трех императоров».|Англия ждет, что каждый исполнит свой долг! Солнце Аустерлица!
+1806|Объявление Континентальной блокады Англии и роспуск Священной Римской империи|Наполеон Бонапарт|Разгром Пруссии при Йене и Ауэрштедте и запрет всей Европе торговать с Великобританией.|Я покорю стихию моря могуществом суши!
+1813|«Битва народов» под Лейпцигом|Карл Шварценберг / Гебхард Блюхер|Крупнейшее сражение наполеоновских войн, в котором союзная коалиция освободила Германию.|Под Лейпцигом рухнула континентальная империя Наполеона
+1815|Венский конгресс и битва при Ватерлоо|Герцог Веллингтон / Клеменс фон Меттерних|Окончательное поражение Наполеона после «Ста дней» и создание Священного союза.|Старая гвардия умирает, но не сдается!
+1819|Освободительные походы Симона Боливара и независимость Латинской Америки|Симон Боливар / Хосе де Сан-Мартин|Крушение испанского колониального владычества и рождение независимых республик Южной Америки.|Легче освободить народ от рабства, чем научить его жить в свободе!
+1823|Провозглашение «Доктрины Монро» президентом США|Джеймс Монро|Декларация принципа невмешательства европейских держав в дела американских континентов.|Америка для американцев!
+1825|Открытие первой общественной железной дороги Стоктон — Дарлингтон в Англии|Джордж Стефенсон|Запуск паровоза «Локомоушн № 1» и начало железнодорожной эры в мировой экономике.|Паровоз Стефенсона связал города и континенты стальными нитями
+1830|Июльская революция во Франции и независимость Бельгии и Греции|Луи-Филипп Орлеанский|«Три славных дня» баррикад в Париже и свержение Реставрации Бурбонов.|Свобода на баррикадах Парижа
+1837|Начало Викторианской эпохи в Великобритании и чартистское движение|Королева Виктория / Бенджамин Дизраэли|Эпоха наивысшего промышленного, финансового и колониального могущества Британской империи.|У Англии нет вечных союзников и нет вечных врагов — у Англии есть только вечные интересы!
+1840|Первая опиумная война Великобритании против Цинского Китая|Линь Цзэсюй|Нанкинский неравноправный договор: захват Гонконга Британией и насильственное открытие портов Китая.|Начало века неравных договоров для империи Цин
+1848|«Весна народов» — волна европейских революций|Луи Блан / Лайош Кошут и Джузеппе Гарибальди|Революции во Франции (Вторая республика), Германии, Австрийской империи, Венгрии и Италии.|По Европе пронесся вихрь борьбы за конституции и национальное единство
+1853|Открытие Японии «черными кораблями» американского коммодора Мэтью Перри|Мэтью Перри|Подписание Канагавского договора и окончание многовековой политики самоизоляции Японии.|Перед Японией встал выбор: модернизироваться или стать колонией
+1857|Национальное восстание сипаев в Индии|Лакшми Баи (Ранни Джханси)|Крупнейшее антиколониальное восстание в Индии и переход страны под прямое управление британской короны.|Я ни за что не отдам свой Джханси!
+1859|Выход труда Чарльза Дарвина «Происхождение видов»|Чарльз Дарвин|Переворот в естествознании и обоснование теории эволюции путем естественного отбора.|Выживает не самый сильный и не самый умный, а тот, кто лучше всех откликается на изменения!
+1861|Рисорджименто — провозглашение объединенного Итальянского королевства|Джузеппе Гарибальди и Камилло Кавур|Поход «Тысячи» Гарибальди на Сицилию и в Неаполь, объединение Италии.|Мы создали Италию, теперь нам предстоит создать итальянцев!
+1861|Начало Гражданской войны в США между Севером и Югом|Авраам Линкольн / Улисс Грант и Роберт Ли|Война промышленного Севера против рабовладельческой Конфедерации Юга за сохранение единства США.|Дом, разделившийся сам в себе, не может устоять!
+1863|Битва при Геттисберге и Прокламация об освобождении рабов в США|Авраам Линкольн|Уничтожение рабства в США и наделение фермеров землей на Западе (Гомстед-акт).|Да не исчезнет с лица земли власть народа, волей народа и для народа!
+1868|Революция и Реставрация Мэйдзи в Японии|Император Муцухито (Мэйдзи)|Ликвидация сёгуната и самурайских привилегий, стремительная модернизация и индустриализация Японии.|Японский дух — западные технологии! Обогащать страну и укреплять армию!
+1870|Франко-прусская война и Седанская катастрофа|Отто фон Бисмарк / Гельмут фон Мольтке|Пленение императора Наполеона III с армией под Седаном и установление Третьей республики во Франции.|Империя Наполеона III рухнула в один день под Седаном
+1871|Провозглашение Германской империи в Версале и Парижская коммуна|Отто фон Бисмарк / Вильгельм I|Объединение Германии «железом и кровью» вокруг Пруссии и 72 дня Парижской коммуны.|Великие вопросы времени решаются не речами и резолюциями большинства, а железом и кровью!
+1882|Создание Тройственного союза Германии, Австро-Венгрии и Италии|Отто фон Бисмарк|Оформление первого военно-политического блока в Европе, положившего начало расколу континента.|Союз трех центральноевропейских монархий
+1884|Берлинская конференция и завершение колониального раздела Африки|Отто фон Бисмарк / Сесил Родс|Колониальная «гонка за Африку» между европейскими державами.|Карта Африки расчерчена по линейке в европейских кабинетах
+1889|Всемирная выставка в Париже и возведение Эйфелевой башни|Гюстав Эйфель|Постройка 300-метровой ажурной стальной башни как символа века стали и инженерии.|Флаг Франции поднят на высоте 300 метров над Парижем
+1896|Победа Эфиопии в битве при Адуа и проведение I Олимпийских игр современности в Афинах|Менелик II / Пьер де Кубертен|Разгром итальянских колониальных войск армией Эфиопии и возрождение Олимпийских игр.|Быстрее, выше, сильнее!
+1898|Испано-американская война — первая война за передел колоний|Теодор Рузвельт|Захват США Филиппин, Гуама, Пуэрто-Рико и установление контроля над Кубой.|Говори мягко, но держи в руках большую дубинку!
+1903|Первый управляемый полет самолета с двигателем братьев Райт|Уилбур и Орвилл Райт|Полет биплана «Флайер-1» в Китти-Хок и рождение мировой авиации.|Человек впервые поднялся в воздух на крылатой машине тяжелее воздуха!
+`;
+
+    const WORLD_E5_RAW = `
+1904|Англо-французское «Сердечное согласие» и оформление Антанты|Эдуард VII / Теофиль Делькассе|Создание военно-политического блока Великобритании, Франции и России в противовес Тройственному союзу.|Европа разделилась на два вооруженных лагеря
+1911|Синьхайская революция в Китае и свержение маньчжурской династии Цин|Сунь Ятсен|Падение двухтысячелетней императорской власти в Китае и провозглашение Китайской Республики.|Три народных принципа: национализм, народовластие, народное благосостояние!
+1914|Сараевское убийство, начало Первой мировой войны и битва на Марне|Жозеф Жоффр / Франц Фердинанд|Крах германского плана молниеносной войны («плана Шлиффена») на Марне и переход к окопной войне.|Лампы гаснут по всей Европе, и мы не увидим их вновь зажженными при нашей жизни!
+1916|Верденская битва и сражение на Сомме (первое применение танков)|Филипп Петен / Дуглас Хейг|Многомесячные сражения на истощение на Западном фронте и первая танковая атака англичан.|Они не пройдут!
+1918|«14 пунктов» Вильсона, Компьенское перемирие и окончание Первой мировой войны|Фердинанд Фош / Вудро Вильсон|Капитуляция Германии в Компьенском лесу, Ноябрьская революция и распад четырех империй.|Это не мир — это перемирие на двадцать лет!
+1919|Версальский мирный договор и учреждение Лиги Наций|Жорж Клемансо, Вудро Вильсон и Дэвид Ллойд Джордж|Создание Версальско-Вашингтонской системы международных отношений.|Мир, продиктованный победителями в Зеркальном зале Версаля
+1923|Провозглашение Турецкой Республики и реформы Кемаля Ататюрка|Мустафа Кемаль Ататюрк|Ликвидация султаната и халифата, светская модернизация Турции и перенос столицы в Анкару.|Мир в стране — мир во всем мире!
+1929|Крах Нью-Йоркской биржи в «Черный вторник» и начало Великой депрессии|Герберт Гувер|Самый глубокий мировой экономический кризис XX века, падение производства и массовая безработица.|Миллионы людей оказались на улицах после обвала Уолл-стрит
+1930|«Соляной поход» Махатмы Ганди и кампания ненасильственного сопротивления в Индии|Махатма Ганди|Многотысячный марш к Аравийскому морю против британской колониальной монополии на соль.|Сначала они тебя не замечают, потом смеются над тобой, затем борются с тобой. А потом ты побеждаешь!
+1933|«Новый курс» президента Франклина Рузвельта в США и приход нацистов к власти в Германии|Франклин Делано Рузвельт|Государственное регулирование экономики, социальные реформы и общественные работы в США.|Единственное, чего нам следует бояться, — это самого страха!
+1936|Национально-революционная и Гражданская война в Испании|Долорес Ибаррури / Франсиско Франко|Борьба Испанской республики и интернациональных бригад против фашистского мятежа.|Но пасаран! Лучше умереть стоя, чем жить на коленях!
+1938|Мюнхенский сговор и расчленение Чехословакии|Невилл Чемберлен / Эдуард Даладье и Уинстон Черчилль|Апогей политики «умиротворения агрессора» — передача Гитлеру Судетской области Чехословакии.|У вас был выбор между войной и бесчестьем. Вы выбрали бесчестье, и теперь вы получите войну!
+1939|Нападение Германии на Польшу и начало Второй мировой войны|Уинстон Черчилль|Вступление Великобритании и Франции в войну и начало крупнейшего вооруженного конфликта в истории.|Мне нечего предложить вам, кроме крови, тяжелого труда, слез и пота!
+1940|Падение Франции, эвакуация из Дюнкерка и воздушная «Битва за Британию»|Уинстон Черчилль / Шарль де Голль|Манифест генерала де Голля «Ко всем французам» и отражение воздушного наступления люфтваффе на Англию.|Мы будем сражаться на пляжах, мы будем сражаться на полях и на улицах — мы никогда не сдадимся!
+1941|Подписание Атлантической хартии и атака Японии на Перл-Харбор|Франклин Рузвельт / Исороку Ямамото|Внезапный удар японского авианосного флота по базе США на Гавайях и вступление США во Вторую мировую войну.|День, который войдет в историю как символ вероломного нападения!
+1942|Сражение у атолла Мидуэй на Тихом океане и битва под Эль-Аламейном|Честер Нимиц / Бернард Монтгомери|Потеря Японией четырех ударных авианосцев у Мидуэя и разгром корпуса Роммеля в Египте.|Это еще не конец. Это даже не начало конца, но, возможно, это конец начала!
+1944|Высадка союзников в Нормандии (Операция «Оверлорд») и освобождение Парижа|Дуайт Эйзенхауэр / Шарль де Голль|Крупнейшая десантная операция в истории и открытие Второго фронта в Западной Европе.|Солдаты, матросы и летчики союзных экспедиционных сил! Глаза всего мира обращены на вас!
+1945|Ялтинская и Потсдамская конференции, создание ООН и окончание Второй мировой войны|Франклин Рузвельт, Иосиф Сталин и Уинстон Черчилль|Учреждение ООН и подписание акта о капитуляции Японии на борту линкора «Миссури».|Мы, народы Объединенных Наций, преисполненные решимости избавить грядущие поколения от бедствий войны...
+1947|Провозглашение независимости Индии и Пакистана и запуск «Плана Маршалла»|Джавахарлал Неру / Джордж Маршалл|Крушение Британской колониальной империи в Индии и программа экономической помощи Западной Европе.|В полночь, когда весь мир спит, Индия пробуждается к жизни и свободе!
+1949|Создание военного блока НАТО и провозглашение Китайской Народной Республики|Мао Цзэдун / Гарри Трумэн|Победа Народно-освободительной армии Китая в гражданской войне и создание Североатлантического альянса.|Китайский народ распрямил плечи и встал во весь рост!
+1950|Начало войны в Корее|Дуглас Макартур / Ким Ир Сен и Пэн Дэхуай|Первый крупный вооруженный конфликт эпохи Холодной войны и разделение полуострова по 38-й параллели.|Перемирие в Пханмунджоме разделило полуостров по 38-й параллели
+1955|Бандунгская конференция стран Азии и Африки и создание Организации Варшавского договора|Ахмед Сукарно / Иосиф Броз Тито и Гамаль Абдель Насер|Рождение Движения неприсоединения и оформление двухполярной военно-политической системы мира.|Пробуждение народов Азии и Африки от колониального сна
+1956|Суэцкий кризис и национализация Суэцкого канала Египтом|Гамаль Абдель Насер|Провал англо-франко-израильской интервенции против Египта и закат старых колониальных держав.|Суэцкий канал принадлежит народу Египта, который построил его своими руками!
+1957|Римский договор и создание Европейского экономического сообщества («Общего рынка»)|Жан Моне, Робер Шуман и Конрад Аденауэр|Начало европейской экономической интеграции шести государств — фундамент ЕС.|Мы не создаем коалиции государств, мы объединяем людей!
+1959|Победа Кубинской революции во главе с Фиделем Кастро|Фидель Кастро и Эрнесто Че Гевара|Свержение диктатуры Батисты на Кубе повстанческой армией.|Родина или смерть! Мы победим!
+1962|Карибский ракетно-ядерный кризис|Джон Кеннеди и Никита Хрущев|Острейшее 13-дневное противостояние СССР и США вокруг ракет на Кубе и предотвращение ядерной войны.|Наша главная связь в том, что все мы живем на одной маленькой планете и дышим одним воздухом!
+1963|Марш на Вашингтон за гражданские права и речь Мартина Лютера Кинга|Мартин Лютер Кинг|Историческая речь у мемориала Линкольна и отмена расовой сегрегации в США.|У меня есть мечта, что настанет день, когда моих детей будут судить не по цвету кожи, а по их личным качествам!
+1969|Первая высадка человека на Луну («Аполлон-11») и запуск сети ARPANET|Нил Армстронг и Базз Олдрин|Выход Нила Армстронга на поверхность Луны и создание первой компьютерной сети — прообраза Интернета.|Это один маленький шаг для человека, но гигантский скачок для всего человечества!
+1973|Парижские соглашения о прекращении войны во Вьетнаме и вывод войск США|Хо Ши Мин / Генри Киссинджер|Окончание американской интервенции во Вьетнаме и последующее объединение страны.|Нет ничего дороже независимости и свободы!
+1978|Начало политики «реформ и открытости» в Китае|Дэн Сяопин|Создание свободных экономических зон и стремительное превращение Китая во вторую экономику мира.|Неважно, какого цвета кошка — черная или белая, хорошая кошка та, которая ловит мышей!
+1989|Падение Берлинской стены и «бархатные революции» в Восточной Европе|Гельмут Коль / Вацлав Гавел|Разрушение стены в Берлине и последующее воссоединение Германии.|Рухнула стена, разделявшая Европу почти три десятилетия
+1992|Маастрихтский договор и учреждение Европейского союза (ЕС)|Франсуа Миттеран и Гельмут Коль|Преобразование ЕЭС в Европейский союз и подготовка к введению единой валюты евро.|Рождение единого экономического и валютного союза Европы
+1994|Ликвидация режима апартеида в ЮАР и избрание Нельсона Манделы президентом|Нельсон Мандела|Победа многолетней борьбы против расовой дискриминации на юге Африки.|Образование — это самое мощное оружие, которое вы можете использовать, чтобы изменить мир!
+`;
+
+    const ALL_EVENTS = [
+      ...unpackCompactDB(RU_E1_RAW, 'RU', 'E1'),
+      ...unpackCompactDB(RU_E2_RAW, 'RU', 'E2'),
+      ...unpackCompactDB(RU_E3_RAW, 'RU', 'E3'),
+      ...unpackCompactDB(RU_E4_RAW, 'RU', 'E4'),
+      ...unpackCompactDB(RU_E5_RAW, 'RU', 'E5'),
+      ...unpackCompactDB(WORLD_E1_RAW, 'WORLD', 'E1'),
+      ...unpackCompactDB(WORLD_E2_RAW, 'WORLD', 'E2'),
+      ...unpackCompactDB(WORLD_E3_RAW, 'WORLD', 'E3'),
+      ...unpackCompactDB(WORLD_E4_RAW, 'WORLD', 'E4'),
+      ...unpackCompactDB(WORLD_E5_RAW, 'WORLD', 'E5')
+    ];
+
+    // ==========================================
+    // ОПЦИИ КОНСТРУКТОРА
+    // ==========================================
+    const SCOPE_CONFIG = {
+      RU: {
+        badge: 'РОССИЯ',
+        block01Title: '[ 01 // ИСТОРИЧЕСКИЙ СЕКТОР ]',
+        block02Title: '[ 02 // ЧТО ДАНО (АРХИВ) ]',
+        regions: [
+          { id: 'ALL', rightLabel: '310 СОБЫТИЙ', label: 'Все эпохи России', desc: 'От призвания варягов до конца XX века • Точные даты', icon: 'world' },
+          { id: 'E5', rightLabel: '55 СОБЫТИЙ', label: 'XX век: Революции, ВОВ и СССР', desc: 'Первая мировая, 1917, Великая Отечественная, Гагарин', icon: 'ussr', redIcon: true },
+          { id: 'E1', rightLabel: '55 СОБЫТИЙ', label: 'Древняя Русь (IX–XII вв.)', desc: 'Рюрик, Олег, Святослав, Владимир, Ярослав Мудрый и Мономах', icon: 'compass' },
+          { id: 'E2', rightLabel: '65 СОБЫТИЙ', label: 'Удельная Русь и Москва', desc: 'Невский, Калита, Донской, Куликовская битва и Иван III', icon: 'compass' },
+          { id: 'E3', rightLabel: '60 СОБЫТИЙ', label: 'Московское царство (XVI–XVII)', desc: 'Иван Грозный, Смута, Минин и Пожарский, первые Романовы', icon: 'compass' },
+          { id: 'E4', rightLabel: '75 СОБЫТИЙ', label: 'Российская Империя (XVIII–XIX)', desc: 'Петр I, Екатерина II, Суворов, 1812 год и Великие реформы', icon: 'compass' }
+        ],
+        questions: [
+          { id: 'event', rightLabel: 'ДАТА', label: 'Событие / Битва / Реформа', desc: 'Определить дату (для важных событий с числом и месяцем)', icon: 'flag_q' },
+          { id: 'person', rightLabel: 'ЛИЧНОСТЬ', label: 'Правитель / Полководец', desc: 'Определить исторического деятеля России по событию', icon: 'crest' },
+          { id: 'quote', rightLabel: 'ЦИТАТА', label: 'Летопись / Манифест / Указ', desc: 'Определить дату по крылатой исторической фразе', icon: 'contour' },
+          { id: 'year_given', rightLabel: 'СОБЫТИЕ', label: 'Историческая дата России', desc: 'Дана точная дата — определить, какое событие произошло', icon: 'capital' },
+          { id: 'summary', rightLabel: 'ХРОНИКА', label: 'Архивная сводка (По описанию)', desc: 'Определить дату по описанию реформы или сражения', icon: 'map_radar' },
+          { id: 'earlier', rightLabel: 'СРАВНЕНИЕ', label: 'Раньше или Позже', desc: 'Выбрать из двух событий одной эпохи более раннее', icon: 'name_tag' }
+        ]
+      },
+      WORLD: {
+        badge: 'МИР',
+        block01Title: '[ 01 // ИСТОРИЧЕСКИЙ СЕКТОР ]',
+        block02Title: '[ 02 // ЧТО ДАНО (АРХИВ) ]',
+        regions: [
+          { id: 'ALL', rightLabel: '320 СОБЫТИЙ', label: 'Весь мир (Все эпохи)', desc: 'От Древнего Востока и Рима до конца XX века • Точные даты', icon: 'world' },
+          { id: 'E1', rightLabel: '65 СОБЫТИЙ', label: 'Древний мир и Античность', desc: 'Египет, Вавилон, Греция, Македонский, Карфаген и Рим', icon: 'compass' },
+          { id: 'E2', rightLabel: '60 СОБЫТИЙ', label: 'Средние века (V–XV вв.)', desc: 'Византия, Карл Великий, Крестовые походы, Столетняя война', icon: 'compass' },
+          { id: 'E3', rightLabel: '65 СОБЫТИЙ', label: 'Новое время (XVI–XVIII вв.)', desc: 'Колумб, Реформация, Кромвель, Просвещение и США', icon: 'compass' },
+          { id: 'E4', rightLabel: '70 СОБЫТИЙ', label: 'XIX век: Империи и Революции', desc: 'Французская революция, Наполеон, Линкольн, Бисмарк, Мэйдзи', icon: 'compass' },
+          { id: 'E5', rightLabel: '60 СОБЫТИЙ', label: 'XX век: Мировые войны', desc: 'Первая и Вторая мировые, ООН, Холодная война и космос', icon: 'compass' }
+        ],
+        questions: [
+          { id: 'event', rightLabel: 'ДАТА', label: 'Мировое событие / Сражение', desc: 'Определить дату (для важных событий с числом и месяцем)', icon: 'flag_q' },
+          { id: 'person', rightLabel: 'ЛИЧНОСТЬ', label: 'Мировой правитель / Лидер', desc: 'Определить полководца, монарха или реформатора', icon: 'crest' },
+          { id: 'quote', rightLabel: 'ЦИТАТА', label: 'Декларация / Трактат / Речь', desc: 'Определить дату по крылатому изречению мировой истории', icon: 'contour' },
+          { id: 'year_given', rightLabel: 'СОБЫТИЕ', label: 'Дата всеобщей истории', desc: 'Дана точная дата — определить мировое событие', icon: 'capital' },
+          { id: 'summary', rightLabel: 'ХРОНИКА', label: 'Хроника цивилизаций', desc: 'Определить дату по описанию переворота или открытия', icon: 'map_radar' },
+          { id: 'earlier', rightLabel: 'СРАВНЕНИЕ', label: 'Раньше или Позже', desc: 'Выбрать из двух мировых событий более раннее', icon: 'name_tag' }
+        ]
+      }
+    };
+
+    const ANSWER_TYPES = [
+      { id: 'choices_4', rightLabel: '4 ВАРИАНТА', label: 'Выбор из 4 вариантов (Точные даты)', desc: 'Плотный шаг дат (±1–8 лет) + число и месяц для ключевых дат', icon: 'choices_4' },
+      { id: 'text_input', rightLabel: 'ТЕРМИНАЛ + БОНУС', label: 'Вписать год (+75 PTS за число и месяц)', desc: 'Ввод года с клавиатуры + бонусный вопрос на точную дату', icon: 'terminal_input' },
+      { id: 'timeline_aim', rightLabel: 'ШКАЛА + БОНУС', label: 'Хроно-Шкала (+75 PTS за точную дату)', desc: 'Наведение прицела на шкале + бонус за число и месяц', icon: 'map_radar' }
+    ];
+
+    const GAME_MODES = [
+      { id: 'standard', rightLabel: 'SOLO // FREE', label: 'Стандарт (Без таймера и жизней)', desc: 'Спокойный режим без ограничений по времени и промахам', icon: 'compass' },
+      { id: 'blitz', rightLabel: 'SOLO // 60S', label: 'Блиц-сканер (60 сек)', desc: 'Максимум очков за одну минуту на скорость реакции', icon: 'blitz_bolt' },
+      { id: 'survival', rightLabel: 'SOLO // 3HP', label: 'Выживание (3 щита)', desc: 'Игра без таймера до трех допущенных ошибок', icon: 'shield_life' },
+      { id: 'local_duel', rightLabel: '1V1 // ЭКРАН', label: 'Дуэль 1 на 1 (На одном экране)', desc: 'Вдвоем за одним устройством: 1-4/WASD против Стрелок', icon: 'duel_swords' },
+      { id: 'online_duel', rightLabel: '1V1 // СЕТЬ', label: 'Онлайн 1 на 1 (По коду)', desc: 'Сетевая дуэль с другом по четырехзначному коду', icon: 'net_link' }
+    ];
+
+    // ==========================================
+    // СОСТОЯНИЕ ИГРЫ
+    // ==========================================
+    let state = {
+      scope: 'RU',
+      region: 'ALL',
+      questionType: 'event',
+      answerType: 'choices_4',
+      gameMode: 'standard',
+      screen: 'menu',
+      round: 1,
+      totalRounds: 10,
+      score: 0,
+      streak: 0,
+      lives: 3,
+      timeLeft: 60,
+      timerId: null,
+      roundStartTime: 0,
+      currentQ: null,
+      feedback: null,
+      p1Score: 0,
+      p2Score: 0,
+      peer: null,
+      conn: null
+    };
+
+    function formatYear(y) {
+      return y < 0 ? `${Math.abs(y)} до н.э.` : `${y} г.`;
+    }
+
+    function formatFullHistoricalDate(item) {
+      if (item.dayMonth) {
+        return `${item.dayMonth} ${formatYear(item.year)}`;
+      }
+      return formatYear(item.year);
+    }
+
+    function getFilteredPool() {
+      return ALL_EVENTS.filter(ev => {
+        if (ev.scope !== state.scope) return false;
+        if (state.region !== 'ALL' && ev.era !== state.region) return false;
+        return true;
+      });
+    }
+
+    function buildTightDateChoices(targetItem) {
+      const trueYear = targetItem.year;
+      let offsets;
+      if (trueYear >= 1900) {
+        offsets = [-4, -3, -2, -1, 1, 2, 3, 4];
+      } else if (trueYear >= 1600) {
+        offsets = [-7, -5, -3, -2, 2, 3, 5, 7];
+      } else if (trueYear > 0) {
+        offsets = [-11, -8, -5, -3, 3, 5, 8, 11];
+      } else {
+        offsets = [-18, -12, -7, -3, 3, 7, 12, 18];
+      }
+
+      if (targetItem.dayMonth) {
+        const fakeDayMonths = [
+          '14 января', '19 февраля', '3 марта', '12 апреля', '16 мая',
+          '22 июня', '15 июля', '26 августа', '8 сентября', '17 октября',
+          '4 ноября', '14 декабря', '27 июня', '5 апреля', '2 октября'
+        ].filter(dm => dm !== targetItem.dayMonth);
+
+        fakeDayMonths.sort(() => Math.random() - 0.5);
+        offsets.sort(() => Math.random() - 0.5);
+
+        const pickedYears = [trueYear];
+        for (const off of offsets) {
+          if (pickedYears.length >= 4) break;
+          const candY = trueYear + off;
+          if (candY !== 0 && candY <= 2025 && !pickedYears.includes(candY)) {
+            pickedYears.push(candY);
+          }
+        }
+
+        const items = [
+          { y: trueYear, label: `${targetItem.dayMonth} ${formatYear(trueYear)}` },
+          { y: trueYear, label: `${fakeDayMonths[0]} ${formatYear(trueYear)}` },
+          { y: pickedYears[1], label: `${fakeDayMonths[1]} ${formatYear(pickedYears[1])}` },
+          { y: pickedYears[2], label: `${fakeDayMonths[2]} ${formatYear(pickedYears[2])}` }
+        ];
+        return items.sort((a, b) => a.y - b.y || a.label.localeCompare(b.label)).map(x => x.label);
+      }
+
+      const set = new Set([trueYear]);
+      offsets.sort(() => Math.random() - 0.5);
+      for (const off of offsets) {
+        if (set.size >= 4) break;
+        const candidate = trueYear + off;
+        if (candidate !== 0 && candidate <= 2025) set.add(candidate);
+      }
+      return Array.from(set).sort((a, b) => a - b).map(formatYear);
+    }
+
+    function buildDayMonthBonusChoices(trueDayMonth) {
+      const pool = [
+        '16 января', '19 февраля', '2 марта', '5 апреля', '12 апреля',
+        '9 мая', '16 мая', '22 июня', '27 июня', '15 июля', '26 августа',
+        '8 сентября', '4 октября', '25 октября', '4 ноября', '19 ноября', '14 декабря'
+      ].filter(x => x !== trueDayMonth);
+      pool.sort(() => Math.random() - 0.5);
+      return [trueDayMonth, pool[0], pool[1], pool[2]].sort(() => Math.random() - 0.5);
+    }
+
+    function setTotalRounds(n) {
+      sfx.play('click');
+      state.totalRounds = n;
+      [10, 20, 50, 999].forEach(val => {
+        const btn = document.getElementById(`roundBtn-${val}`);
+        if (!btn) return;
+        btn.className = val === n
+          ? 'px-2 py-0.5 rounded bg-[#f5efe4] text-[#14110e] font-bold'
+          : 'px-2 py-0.5 rounded bg-white/5 text-[#cbbca4]';
+      });
+    }
+
+    function renderConstructor() {
+      const cfg = SCOPE_CONFIG[state.scope];
+      const activeRegionObj = cfg.regions.find(r => r.id === state.region) || cfg.regions[0];
+
+      ['RU', 'WORLD'].forEach(sc => {
+        const btn = document.getElementById(`scopeBtn-${sc}`);
+        btn.className = `top-pill ${sc === state.scope ? 'active' : ''} px-3.5 py-1.5 rounded-xl font-mono text-[10px] sm:text-xs tracking-wider uppercase`;
+      });
+
+      document.getElementById('titleBlock01').textContent = cfg.block01Title;
+      document.getElementById('poolBlock01').textContent = `ПУЛ: ${activeRegionObj.rightLabel}`;
+      document.getElementById('titleBlock02').textContent = cfg.block02Title;
+
+      document.getElementById('launchBtnLabel').textContent =
+        state.gameMode === 'online_duel' ? 'ОТКРЫТЬ ЛОББИ 1 НА 1' : 'ЗАПУСТИТЬ МАТРИЦУ';
+
+      document.getElementById('footerArchiveBreakdown').innerHTML =
+        `[ СЕКТОР: <strong class="text-[#f5efe4]">${activeRegionObj.label.toUpperCase()}</strong> // ПУЛ: <strong class="text-[#f5efe4]">${activeRegionObj.rightLabel}</strong> ]`;
+
+      // Блок 01: Эпохи
+      document.getElementById('gridRegions').innerHTML = cfg.regions.map(r => {
+        const active = state.region === r.id;
+        const iconColor = active ? 'text-[#14110e]' : (r.redIcon ? 'text-rose-500' : 'text-[#f5efe4]');
+        return `
+          <button
+            type="button"
+            onclick="selectRegion('${r.id}')"
+            class="row-pill ${active ? 'active' : ''} w-full px-4 py-3.5 rounded-2xl text-left flex items-center justify-between gap-3"
+          >
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="row-icon ${iconColor} shrink-0">
+                ${getTacticalSvg(r.icon, 'w-6 h-6')}
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-sm sm:text-base leading-tight truncate">${r.label}</div>
+                <div class="sub-desc text-[11px] text-[#cbbca4] truncate mt-0.5">${r.desc}</div>
+              </div>
+            </div>
+            <span class="right-meta text-xs font-mono text-[#cbbca4] shrink-0 uppercase">
+              ${r.rightLabel}
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      // Блок 02: Вопросы
+      document.getElementById('gridQuestions').innerHTML = cfg.questions.map(q => {
+        const active = state.questionType === q.id;
+        return `
+          <button
+            type="button"
+            onclick="selectQuestionType('${q.id}')"
+            class="row-pill ${active ? 'active' : ''} w-full px-4 py-3.5 rounded-2xl text-left flex items-center justify-between gap-3"
+          >
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="row-icon text-[#f5efe4] shrink-0">
+                ${getTacticalSvg(q.icon, 'w-6 h-6')}
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-sm sm:text-base leading-tight truncate">${q.label}</div>
+                <div class="sub-desc text-[11px] text-[#cbbca4] truncate mt-0.5">${q.desc}</div>
+              </div>
+            </div>
+            <span class="right-meta text-xs font-mono text-[#cbbca4] shrink-0 uppercase">
+              ${q.rightLabel}
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      // Блок 03: Механики ответа
+      document.getElementById('gridAnswers').innerHTML = ANSWER_TYPES.map(a => {
+        const active = state.answerType === a.id;
+        return `
+          <button
+            type="button"
+            onclick="selectAnswerType('${a.id}')"
+            class="row-pill ${active ? 'active' : ''} w-full px-4 py-3.5 rounded-2xl text-left flex items-center justify-between gap-3"
+          >
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="row-icon text-[#f5efe4] shrink-0">
+                ${getTacticalSvg(a.icon, 'w-6 h-6')}
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-sm sm:text-base leading-tight truncate">${a.label}</div>
+                <div class="sub-desc text-[11px] text-[#cbbca4] truncate mt-0.5">${a.desc}</div>
+              </div>
+            </div>
+            <span class="right-meta text-xs font-mono text-[#cbbca4] shrink-0 uppercase">
+              ${a.rightLabel}
+            </span>
+          </button>
+        `;
+      }).join('');
+
+      // Блок 04: Режимы игры
+      document.getElementById('gridModes').innerHTML = GAME_MODES.map(m => {
+        const active = state.gameMode === m.id;
+        return `
+          <button
+            type="button"
+            onclick="selectGameMode('${m.id}')"
+            class="row-pill ${active ? 'active' : ''} w-full px-4 py-3 rounded-2xl text-left flex items-center justify-between gap-3"
+          >
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="row-icon text-[#f5efe4] shrink-0">
+                ${getTacticalSvg(m.icon, 'w-6 h-6')}
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-sm sm:text-base leading-tight truncate">${m.label}</div>
+                <div class="sub-desc text-[11px] text-[#cbbca4] truncate mt-0.5">${m.desc}</div>
+              </div>
+            </div>
+            <span class="right-meta text-xs font-mono text-[#cbbca4] shrink-0 uppercase">
+              ${m.rightLabel}
+            </span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function setScope(sc) {
+      sfx.play('click');
+      state.scope = sc;
+      renderConstructor();
+      if (state.screen === 'play') startSession();
+    }
+    function selectRegion(id) {
+      sfx.play('click');
+      state.region = id;
+      renderConstructor();
+    }
+    function selectQuestionType(id) {
+      sfx.play('click');
+      state.questionType = id;
+      if ((id === 'person' || id === 'year_given' || id === 'earlier') && state.answerType !== 'choices_4') {
+        state.answerType = 'choices_4';
+      }
+      renderConstructor();
+    }
+    function selectAnswerType(id) {
+      sfx.play('click');
+      state.answerType = id;
+      if (id !== 'choices_4' && (state.questionType === 'person' || state.questionType === 'year_given' || state.questionType === 'earlier')) {
+        state.questionType = 'event';
+      }
+      renderConstructor();
+    }
+    function selectGameMode(id) {
+      sfx.play('click');
+      state.gameMode = id;
+      renderConstructor();
+    }
+
+    function setScreen(scr) {
+      clearInterval(state.timerId);
+      state.screen = scr;
+      ['menu', 'lobby', 'play', 'summary'].forEach(s => {
+        document.getElementById(`screen-${s}`).classList.toggle('hidden', s !== scr);
+      });
+    }
+
+    function handleLaunchClick() {
+      sfx.play('click');
+      if (state.gameMode === 'online_duel') {
+        document.getElementById('roomCodeDisplay').textContent = String(Math.floor(1000 + Math.random() * 9000));
+        setScreen('lobby');
+      } else {
+        startSession();
+      }
+    }
+
+    function buildQuestion() {
+      const pool = getFilteredPool();
+      const target = pool[Math.floor(Math.random() * pool.length)];
+      const sameEraPool = ALL_EVENTS.filter(x => x.id !== target.id && x.scope === target.scope && x.era === target.era);
+
+      if (state.questionType === 'earlier') {
+        let second = sameEraPool[Math.floor(Math.random() * sameEraPool.length)] || pool[0];
+        while (second.year === target.year) {
+          second = pool[Math.floor(Math.random() * pool.length)];
+        }
+        return { target, second, choices: [target, second] };
+      }
+
+      let choices = [];
+      let correctValue = '';
+
+      if (state.questionType === 'person') {
+        correctValue = target.person;
+        const set = new Set([correctValue]);
+        const shuffled = [...sameEraPool].sort(() => Math.random() - 0.5);
+        for (const item of shuffled) {
+          if (set.size >= 4) break;
+          set.add(item.person);
+        }
+        choices = Array.from(set).sort(() => Math.random() - 0.5);
+      } else if (state.questionType === 'year_given') {
+        correctValue = target.event;
+        const set = new Set([correctValue]);
+        const shuffled = [...sameEraPool].sort(() => Math.random() - 0.5);
+        for (const item of shuffled) {
+          if (set.size >= 4) break;
+          set.add(item.event);
+        }
+        choices = Array.from(set).sort(() => Math.random() - 0.5);
+      } else {
+        correctValue = formatFullHistoricalDate(target);
+        choices = buildTightDateChoices(target);
+      }
+
+      return { target, choices, correctValue };
+    }
+
+    function startSession() {
+      clearInterval(state.timerId);
+      state.round = 1;
+      state.score = 0;
+      state.streak = 0;
+      state.lives = 3;
+      state.timeLeft = 60;
+      state.p1Score = 0;
+      state.p2Score = 0;
+      state.feedback = null;
+      state.currentQ = buildQuestion();
+      setScreen('play');
+
+      if (state.gameMode === 'blitz') {
+        state.timerId = setInterval(() => {
+          state.timeLeft--;
+          renderPlayTopBar();
+          if (state.timeLeft <= 0) {
+            clearInterval(state.timerId);
+            renderSummary();
+            setScreen('summary');
+          }
+        }, 1000);
+      }
+
+      renderPlayScreen();
+    }
+
+    function renderPlayTopBar() {
+      const leftEl = document.getElementById('playLeftStat');
+      const rightEl = document.getElementById('playRightStat');
+      const roundsDisplay = state.totalRounds === 999 ? '∞' : state.totalRounds;
+
+      if (state.gameMode === 'local_duel' || state.gameMode === 'online_duel') {
+        leftEl.innerHTML = `РАУНД: <strong class="text-[#f5efe4]">${state.round} / ${roundsDisplay}</strong>`;
+        rightEl.innerHTML = `
+          <span class="px-2.5 py-1 rounded bg-[#f5efe4] text-[#14110e] font-bold">P1: ${state.p1Score}</span>
+          <span class="px-2.5 py-1 rounded bg-white/10 text-[#f5efe4] font-bold">P2: ${state.p2Score}</span>
+        `;
+      } else {
+        leftEl.innerHTML = `РАУНД: <strong class="text-[#f5efe4]">${state.round} / ${roundsDisplay}</strong>`;
+        const shieldsHtml = state.gameMode === 'survival'
+          ? `<span class="flex items-center gap-1">${[1, 2, 3].map(h =>
+              `<span class="${h <= state.lives ? 'text-[#f5efe4]' : 'text-white/20'}">${getTacticalSvg('shield_life', 'w-4 h-4')}</span>`
+            ).join('')}</span>`
+          : '';
+        const blitzHtml = state.gameMode === 'blitz'
+          ? `<span class="px-2.5 py-0.5 rounded bg-[#f5efe4] text-[#14110e] font-black">${state.timeLeft}S</span>`
+          : '';
+        rightEl.innerHTML = `
+          ${shieldsHtml}
+          ${blitzHtml}
+          <span class="text-[#cbbca4]">КОМБО: <strong class="text-emerald-400">×${state.streak}</strong></span>
+          <span class="text-[#cbbca4]">ОЧКИ: <strong class="text-[#f5efe4]">${state.score} PTS</strong></span>
+        `;
+      }
+    }
+
+    function renderPlayScreen() {
+      state.roundStartTime = Date.now();
+      renderPlayTopBar();
+      const q = state.currentQ;
+
+      const fbBox = document.getElementById('playFeedbackBox');
+      fbBox.classList.add('hidden');
+      const bonusBox = document.getElementById('playExactDateBonusBox');
+      bonusBox.classList.add('hidden');
+
+      const promptEl = document.getElementById('playQuestionPrompt');
+      const ansEl = document.getElementById('playAnswerArea');
+
+      if (state.questionType === 'earlier') {
+        promptEl.innerHTML = `
+          <div class="px-8 py-5 rounded-2xl bg-[#14110e]/85 border border-[#ebd6b6]/15 text-center">
+            <div class="text-xs font-mono text-[#cbbca4] uppercase">КАКОЕ ИЗ ДВУХ СОБЫТИЙ ПРОИЗОШЛО РАНЬШЕ?</div>
+          </div>
+        `;
+        ansEl.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            <button type="button" onclick="submitEarlierChoice(0)" class="row-pill p-5 rounded-2xl text-left space-y-2">
+              <div class="text-[10px] font-mono text-[#cbbca4]">[ ОБЪЕКТ 01 ]</div>
+              <div class="text-lg font-black text-[#f5efe4]">${q.target.event}</div>
+              <div class="text-xs text-[#cbbca4]">${q.target.summary}</div>
+            </button>
+            <button type="button" onclick="submitEarlierChoice(1)" class="row-pill p-5 rounded-2xl text-left space-y-2">
+              <div class="text-[10px] font-mono text-[#cbbca4]">[ ОБЪЕКТ 02 ]</div>
+              <div class="text-lg font-black text-[#f5efe4]">${q.second.event}</div>
+              <div class="text-xs text-[#cbbca4]">${q.second.summary}</div>
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      if (state.questionType === 'year_given') {
+        promptEl.innerHTML = `
+          <div class="px-8 py-5 rounded-2xl bg-[#14110e]/85 border border-[#ebd6b6]/15 flex items-center gap-3.5">
+            ${getTacticalSvg('capital', 'w-8 h-8 text-[#f5efe4] shrink-0')}
+            <div>
+              <div class="text-[10px] font-mono text-[#cbbca4] uppercase">ИСТОРИЧЕСКАЯ ДАТА:</div>
+              <div class="text-2xl sm:text-4xl font-black font-mono uppercase tracking-wider text-[#f5efe4]">
+                ${formatFullHistoricalDate(q.target)}
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.questionType === 'quote') {
+        promptEl.innerHTML = `
+          <div class="max-w-2xl px-8 py-6 rounded-2xl bg-[#14110e]/85 border border-[#ebd6b6]/15 text-center space-y-2">
+            <div class="text-xl sm:text-2xl font-black italic text-[#f5efe4]">«${q.target.quote}»</div>
+            <div class="text-xs text-[#cbbca4]">${q.target.summary}</div>
+          </div>
+        `;
+      } else if (state.questionType === 'summary') {
+        promptEl.innerHTML = `
+          <div class="max-w-2xl px-8 py-6 rounded-2xl bg-[#14110e]/85 border border-[#ebd6b6]/15 text-center space-y-2">
+            <div class="text-[10px] font-mono text-[#cbbca4] uppercase">АРХИВНАЯ СВОДКА СОБЫТИЯ:</div>
+            <div class="text-base sm:text-xl font-bold text-[#f5efe4]">${q.target.summary}</div>
+          </div>
+        `;
+      } else {
+        const exactBadge = q.target.dayMonth
+          ? `<div class="inline-block px-2.5 py-0.5 rounded bg-[#d4af76]/20 border border-[#d4af76]/40 text-[10px] font-mono text-[#ebd6b6] uppercase mb-1">ТОЧНАЯ ДАТА // ЧИСЛО И МЕСЯЦ</div>`
+          : '';
+        promptEl.innerHTML = `
+          <div class="max-w-2xl px-8 py-6 rounded-2xl bg-[#14110e]/85 border border-[#ebd6b6]/15 text-center space-y-2 shadow-xl">
+            ${exactBadge}
+            <div class="text-xl sm:text-3xl font-black uppercase tracking-wider text-[#f5efe4]">
+              ${q.target.event}
+            </div>
+            <div class="text-xs sm:text-sm text-[#cbbca4]">${q.target.summary}</div>
+          </div>
+        `;
+      }
+
+      if (state.gameMode === 'local_duel' && state.answerType === 'choices_4') {
+        ansEl.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+            <div class="p-4 rounded-2xl bg-[#14110e]/75 border border-[#ebd6b6]/15">
+              <div class="text-xs font-mono font-bold text-[#f5efe4] mb-3 flex items-center justify-between">
+                <span>ИГРОК 1 [ КЛАВИШИ 1-4 / WASD ]</span>
+                <span class="text-[#cbbca4]">ОЧКИ: ${state.p1Score}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                ${q.choices.map((c, idx) => `
+                  <button
+                    type="button"
+                    onclick="submitChoice(${idx}, 1)"
+                    class="row-pill p-3 rounded-xl text-left text-xs font-bold flex items-center justify-between"
+                  >
+                    <span class="truncate">${c}</span>
+                    <kbd class="text-[10px] font-mono opacity-60">[0${idx + 1}]</kbd>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <div class="p-4 rounded-2xl bg-[#14110e]/75 border border-[#ebd6b6]/15">
+              <div class="text-xs font-mono font-bold text-[#f5efe4] mb-3 flex items-center justify-between">
+                <span>ИГРОК 2 [ СТРЕЛКИ / МЫШЬ ]</span>
+                <span class="text-[#cbbca4]">ОЧКИ: ${state.p2Score}</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                ${q.choices.map((c, idx) => `
+                  <button
+                    type="button"
+                    onclick="submitChoice(${idx}, 2)"
+                    class="row-pill p-3 rounded-xl text-left text-xs font-bold flex items-center justify-between"
+                  >
+                    <span class="truncate">${c}</span>
+                    <kbd class="text-[10px] font-mono opacity-60">${['↑', '←', '↓', '→'][idx]}</kbd>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (state.answerType === 'choices_4') {
+        ansEl.innerHTML = `
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+            ${q.choices.map((c, idx) => `
+              <button
+                type="button"
+                id="choiceBtn-${idx}"
+                onclick="submitChoice(${idx}, 1)"
+                class="row-pill px-5 py-4 rounded-2xl font-bold text-left flex items-center justify-between gap-3"
+              >
+                <span class="text-sm sm:text-base">${c}</span>
+                <span class="right-meta font-mono text-xs text-[#cbbca4] shrink-0">[0${idx + 1}]</span>
+              </button>
+            `).join('')}
+          </div>
+        `;
+      } else if (state.answerType === 'text_input') {
+        ansEl.innerHTML = `
+          <div class="w-full max-w-lg">
+            <form onsubmit="event.preventDefault(); submitTypedYear();" class="flex gap-2">
+              <input
+                id="typedYearInput"
+                type="number"
+                placeholder="ВВЕДИТЕ ГОД (ДЛЯ ДО Н.Э. СО ЗНАКОМ МИНУС)..."
+                class="flex-1 px-4 py-3.5 rounded-xl bg-[#14110e]/90 border border-[#ebd6b6]/25 text-[#f5efe4] font-mono text-sm focus:outline-none focus:border-[#f5efe4]"
+              />
+              <button
+                type="submit"
+                class="px-6 py-3.5 rounded-xl bg-[#f5efe4] text-[#14110e] font-black uppercase text-xs tracking-wider"
+              >
+                ОТВЕТИТЬ
+              </button>
+            </form>
+          </div>
+        `;
+      } else if (state.answerType === 'timeline_aim') {
+        const minY = q.target.year - 35;
+        const maxY = Math.min(2025, q.target.year + 35);
+        const midY = Math.round((minY + maxY) / 2);
+        ansEl.innerHTML = `
+          <div class="w-full p-5 rounded-2xl bg-[#14110e]/80 border border-[#ebd6b6]/15 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono text-[#cbbca4]">ДИАПАЗОН СЕКТОРА: ${formatYear(minY)} — ${formatYear(maxY)}</span>
+              <span id="tlCurrentLabel" class="text-2xl font-mono font-black text-[#f5efe4]">${formatYear(midY)}</span>
+            </div>
+            <input
+              id="tlRangeInput"
+              type="range"
+              min="${minY}"
+              max="${maxY}"
+              value="${midY}"
+              class="tactical-range"
+              oninput="document.getElementById('tlCurrentLabel').textContent = formatYear(parseInt(this.value, 10))"
+            />
+            <div class="flex justify-end">
+              <button
+                type="button"
+                onclick="submitTimeline()"
+                class="px-6 py-3 rounded-xl bg-[#f5efe4] text-[#14110e] font-black uppercase text-xs font-mono tracking-wider"
+              >
+                ЗАФИКСИРОВАТЬ ПРИЦЕЛ
+              </button>
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function computeTacticalPoints() {
+      const elapsedSec = (Date.now() - state.roundStartTime) / 1000;
+      const speedBonus = Math.max(0, Math.round(50 - elapsedSec * 5));
+      return 100 + speedBonus + state.streak * 20;
+    }
+
+    function showPlayFeedback(isCorrect, text) {
+      const fbBox = document.getElementById('playFeedbackBox');
+      fbBox.classList.remove('hidden');
+      fbBox.className = `mt-5 px-5 py-2.5 rounded-xl border font-mono text-xs sm:text-sm font-bold flex items-center justify-center gap-2 ${
+        isCorrect
+          ? 'bg-[#f5efe4] text-[#14110e] border-[#f5efe4] shadow-[0_0_25px_rgba(245,239,228,0.3)]'
+          : 'bg-rose-950/90 border-rose-500 text-rose-200'
+      }`;
+      fbBox.innerHTML = `<span>${text}</span>`;
+      renderPlayTopBar();
+    }
+
+    function advanceNextRound() {
+      setTimeout(() => {
+        if (state.totalRounds !== 999 && state.round >= state.totalRounds && state.gameMode !== 'blitz') {
+          renderSummary();
+          setScreen('summary');
+          return;
+        }
+        state.round++;
+        state.feedback = null;
+        state.currentQ = buildQuestion();
+        renderPlayScreen();
+      }, 1300);
+    }
+
+    function triggerExactDateBonusChallenge(targetItem, basePts) {
+      const bonusBox = document.getElementById('playExactDateBonusBox');
+      const dmChoices = buildDayMonthBonusChoices(targetItem.dayMonth);
+      bonusBox.classList.remove('hidden');
+      bonusBox.innerHTML = `
+        <div class="text-xs font-mono text-[#ebd6b6] text-center uppercase">
+          ГОД ВЕРНЫЙ (+${basePts} PTS)! БОНУС (+75 PTS): УКАЖИТЕ ТОЧНОЕ ЧИСЛО И МЕСЯЦ:
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          ${dmChoices.map(dm => `
+            <button
+              type="button"
+              onclick="resolveExactDateBonus('${dm}', '${targetItem.dayMonth}')"
+              class="row-pill py-2.5 px-3 rounded-xl font-mono text-xs font-bold text-center"
+            >
+              ${dm} ${formatYear(targetItem.year)}
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    function resolveExactDateBonus(pickedDm, trueDm) {
+      const q = state.currentQ;
+      const bonusBox = document.getElementById('playExactDateBonusBox');
+      bonusBox.classList.add('hidden');
+      if (pickedDm === trueDm) {
+        sfx.play('correct');
+        state.score += 75;
+        showPlayFeedback(true, `ТОЧНАЯ ДАТА ПОДТВЕРЖДЕНА: ${trueDm.toUpperCase()} ${formatYear(q.target.year)} (+75 БОНУС PTS!)`);
+      } else {
+        sfx.play('wrong');
+        showPlayFeedback(true, `ГОД ЗАСЧИТАН! ТОЧНАЯ ДАТА БЫЛА: ${trueDm.toUpperCase()} ${formatYear(q.target.year)}`);
+      }
+      advanceNextRound();
+    }
+
+    function submitChoice(idx, player = 1) {
+      if (state.feedback) return;
+      const q = state.currentQ;
+      const chosen = q.choices[idx];
+      const isCorrect = chosen === q.correctValue;
+      state.feedback = { status: isCorrect ? 'correct' : 'wrong' };
+
+      const btn = document.getElementById(`choiceBtn-${idx}`);
+      if (isCorrect) {
+        if (btn) btn.classList.add('active');
+        sfx.play('correct');
+        let pts = computeTacticalPoints();
+        const exactBonus = q.target.dayMonth && state.questionType !== 'person' && state.questionType !== 'year_given' ? 25 : 0;
+        pts += exactBonus;
+        state.score += pts;
+        state.streak++;
+        if (player === 1) state.p1Score++;
+        if (player === 2) state.p2Score++;
+        showPlayFeedback(true, `ВЕРНО! ${q.target.event.toUpperCase()} — ${formatFullHistoricalDate(q.target)} (+${pts} PTS)`);
+      } else {
+        if (btn) {
+          btn.style.background = 'rgba(136, 19, 55, 0.85)';
+          btn.style.borderColor = '#f43f5e';
+        }
+        sfx.play('wrong');
+        state.streak = 0;
+        showPlayFeedback(false, `ОШИБКА! ПРАВИЛЬНЫЙ ОТВЕТ: ${q.correctValue}`);
+        if (state.gameMode === 'survival') {
+          state.lives--;
+          if (state.lives <= 0) {
+            setTimeout(() => {
+              renderSummary();
+              setScreen('summary');
+            }, 1300);
+            return;
+          }
+        }
+      }
+      advanceNextRound();
+    }
+
+    function submitEarlierChoice(index) {
+      if (state.feedback) return;
+      const q = state.currentQ;
+      const picked = index === 0 ? q.target : q.second;
+      const other = index === 0 ? q.second : q.target;
+      const isCorrect = picked.year < other.year;
+      state.feedback = { status: isCorrect ? 'correct' : 'wrong' };
+
+      if (isCorrect) {
+        sfx.play('correct');
+        const pts = computeTacticalPoints();
+        state.score += pts;
+        state.streak++;
+        showPlayFeedback(true, `ВЕРНО! ${formatFullHistoricalDate(picked)} РАНЬШЕ ЧЕМ ${formatFullHistoricalDate(other)} (+${pts} PTS)`);
+      } else {
+        sfx.play('wrong');
+        state.streak = 0;
+        showPlayFeedback(false, `ОШИБКА! ${formatFullHistoricalDate(other)} БЫЛО РАНЬШЕ ЧЕМ ${formatFullHistoricalDate(picked)}`);
+      }
+      advanceNextRound();
+    }
+
+    function submitTypedYear() {
+      if (state.feedback) return;
+      const val = parseInt(document.getElementById('typedYearInput').value, 10);
+      if (isNaN(val)) return;
+      const q = state.currentQ;
+      const isCorrect = val === q.target.year;
+      state.feedback = { status: isCorrect ? 'correct' : 'wrong' };
+
+      if (isCorrect) {
+        sfx.play('correct');
+        const pts = computeTacticalPoints() + 50;
+        state.score += pts;
+        state.streak++;
+        renderPlayTopBar();
+        if (q.target.dayMonth) {
+          triggerExactDateBonusChallenge(q.target, pts);
+          return;
+        }
+        showPlayFeedback(true, `ВЕРНО! ТОЧНЫЙ ГОД: ${formatFullHistoricalDate(q.target)} (+${pts} PTS)`);
+      } else {
+        sfx.play('wrong');
+        state.streak = 0;
+        showPlayFeedback(false, `ОШИБКА! ПРАВИЛЬНАЯ ДАТА: ${formatFullHistoricalDate(q.target)}`);
+      }
+      advanceNextRound();
+    }
+
+    function submitTimeline() {
+      if (state.feedback) return;
+      const val = parseInt(document.getElementById('tlRangeInput').value, 10);
+      const q = state.currentQ;
+      const diff = Math.abs(val - q.target.year);
+      const isCorrect = diff <= 4;
+      state.feedback = { status: isCorrect ? 'correct' : 'wrong' };
+
+      if (isCorrect) {
+        sfx.play('correct');
+        const pts = computeTacticalPoints();
+        state.score += pts;
+        state.streak++;
+        renderPlayTopBar();
+        if (q.target.dayMonth) {
+          triggerExactDateBonusChallenge(q.target, pts);
+          return;
+        }
+        showPlayFeedback(true, `ТОЧНОСТЬ ±${diff} ЛЕТ! ИСТИНА: ${formatFullHistoricalDate(q.target)} (+${pts} PTS)`);
+      } else {
+        sfx.play('wrong');
+        state.streak = 0;
+        showPlayFeedback(false, `ОТКЛОНЕНИЕ ${diff} ЛЕТ! ТОЧНАЯ ДАТА: ${formatFullHistoricalDate(q.target)}`);
+      }
+      advanceNextRound();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (state.screen !== 'play' || state.answerType !== 'choices_4' || state.feedback) return;
+      const k = e.key.toLowerCase();
+      if (state.gameMode === 'local_duel') {
+        const p1Map = { '1': 0, '2': 1, '3': 2, '4': 3, 'w': 0, 'a': 1, 's': 2, 'd': 3, 'ц': 0, 'ф': 1, 'ы': 2, 'в': 3 };
+        const p2Map = { 'arrowup': 0, 'arrowleft': 1, 'arrowdown': 2, 'arrowright': 3 };
+        if (k in p1Map) {
+          e.preventDefault();
+          submitChoice(p1Map[k], 1);
+        } else if (k in p2Map) {
+          e.preventDefault();
+          submitChoice(p2Map[k], 2);
+        }
+      } else {
+        const soloMap = { '1': 0, '2': 1, '3': 2, '4': 3 };
+        if (k in soloMap) {
+          e.preventDefault();
+          submitChoice(soloMap[k], 1);
+        }
+      }
+    });
+
+    function renderSummary() {
+      const box = document.getElementById('summaryStatsContent');
+      if (state.gameMode === 'local_duel' || state.gameMode === 'online_duel') {
+        box.innerHTML = `
+          <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 rounded-2xl bg-black/55 border border-[#ebd6b6]/15">
+              <div class="text-xs font-mono text-[#cbbca4]">ИГРОК 1</div>
+              <div class="text-3xl font-mono font-black text-[#f5efe4] mt-1">${state.p1Score}</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-black/55 border border-[#ebd6b6]/15">
+              <div class="text-xs font-mono text-[#cbbca4]">ИГРОК 2</div>
+              <div class="text-3xl font-mono font-black text-[#f5efe4] mt-1">${state.p2Score}</div>
+            </div>
+          </div>
+        `;
+      } else {
+        box.innerHTML = `
+          <div class="p-5 rounded-2xl bg-black/55 border border-[#ebd6b6]/15">
+            <div class="text-xs font-mono text-[#cbbca4]">ИТОГОВЫЙ СЧЁТ</div>
+            <div class="text-4xl font-mono font-black text-[#f5efe4] mt-1">${state.score} PTS</div>
+          </div>
+        `;
+      }
+    }
+
+    function createPeerHost() {
+      const code = document.getElementById('roomCodeDisplay').textContent;
+      document.getElementById('lobbyStatus').textContent = 'Ожидание подключения соперника по коду ' + code + '...';
+      if (state.peer) state.peer.destroy();
+      state.peer = new Peer('HISTMATRIX-' + code);
+      state.peer.on('connection', conn => {
+        state.conn = conn;
+        conn.on('open', () => {
+          conn.send({
+            type: 'START',
+            scope: state.scope,
+            region: state.region,
+            questionType: state.questionType,
+            answerType: state.answerType
+          });
+          startSession();
+        });
+      });
+    }
+
+    function joinPeerRoom() {
+      const code = document.getElementById('joinCodeInput').value.trim();
+      if (!code) return;
+      document.getElementById('lobbyStatus').textContent = 'Синхронизация с комнатой ' + code + '...';
+      if (state.peer) state.peer.destroy();
+      state.peer = new Peer();
+      state.peer.on('open', () => {
+        const conn = state.peer.connect('HISTMATRIX-' + code);
+        state.conn = conn;
+        conn.on('data', data => {
+          if (data.type === 'START') {
+            state.scope = data.scope;
+            state.region = data.region;
+            state.questionType = data.questionType;
+            state.answerType = data.answerType;
+            renderConstructor();
+            startSession();
+          }
+        });
+      });
+    }
+
+    renderConstructor();
+  </script>
+</body>
+</html>
